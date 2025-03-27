@@ -1,45 +1,48 @@
-const Redis = require('redis');
+const Redis = require('ioredis');
 require('dotenv').config();
 
-// Get Redis URL from environment
-const REDIS_URL = process.env.REDIS_URL;
-
-if (!REDIS_URL) {
-  throw new Error('REDIS_URL environment variable is not set');
-}
-
-const redisClient = Redis.createClient({
-  url: REDIS_URL
-});
-
-redisClient.on('error', (err) => console.error('Redis Client Error', err));
-redisClient.on('connect', () => console.log('Redis Client Connected'));
-
-// Connect to Redis
-redisClient.connect()
-  .then(() => {
-    console.log('Successfully connected to Redis');
-  })
-  .catch((error) => {
-    console.error('Failed to connect to Redis:', error);
-    throw error;
-  });
+let redisClient = null;
 
 const setupRedis = async () => {
   try {
-    await redisClient.connect();
-    console.log('Redis connection successful');
+    if (redisClient) {
+      console.log('Redis client already exists');
+      return redisClient;
+    }
 
-    // Subscribe to notification channel
-    const subscriber = redisClient.duplicate();
-    await subscriber.subscribe('notifications', (message) => {
-      console.log('Received notification:', message);
-      // Handle notification (to be implemented)
+    const REDIS_URL = process.env.REDIS_URL;
+    if (!REDIS_URL) {
+      throw new Error('REDIS_URL environment variable is not set');
+    }
+
+    redisClient = new Redis(REDIS_URL, {
+      tls: {
+        rejectUnauthorized: false
+      }
     });
+
+    redisClient.on('connect', () => {
+      console.log('Redis Client Connected');
+    });
+
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
+
+    await redisClient.ping();
+    console.log('Successfully connected to Redis');
+    return redisClient;
   } catch (error) {
     console.error('Redis setup failed:', error);
     throw error;
   }
+};
+
+const getRedisClient = () => {
+  if (!redisClient) {
+    throw new Error('Redis client not initialized');
+  }
+  return redisClient;
 };
 
 // Helper function to publish notifications
@@ -53,7 +56,7 @@ const publishNotification = async (channel, message) => {
 };
 
 module.exports = {
-  redisClient,
   setupRedis,
+  getRedisClient,
   publishNotification
 }; 

@@ -65,10 +65,15 @@ app.use((err, req, res, next) => {
 // Database and Redis setup
 const startServer = async () => {
   try {
+    // Setup database first
     await setupDatabase();
-    await setupRedis();
     console.log('Database setup completed');
     
+    // Setup Redis
+    await setupRedis();
+    console.log('Redis setup completed');
+    
+    // Start the server
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
