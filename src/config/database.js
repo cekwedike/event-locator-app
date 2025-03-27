@@ -80,7 +80,4 @@ const runMigrations = async () => {
   }
 };
 
-module.exports = {
-  db,
-  setupDatabase
-}; 
+module.exports = db; 

@@ -5,9 +5,10 @@ const path = require('path');
 const setupDatabase = async () => {
   try {
     // Get absolute paths
-    const schemaPath = path.resolve(__dirname, 'schema.sql');
-    const seedPath = path.resolve(__dirname, 'seed.sql');
+    const schemaPath = path.join(__dirname, 'schema.sql');
+    const seedPath = path.join(__dirname, 'seed.sql');
 
+    console.log('Current directory:', __dirname);
     console.log('Schema file path:', schemaPath);
     console.log('Seed file path:', seedPath);
 
@@ -21,12 +22,12 @@ const setupDatabase = async () => {
 
     // Read and execute schema.sql
     const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
-    await db.none(schemaSQL);
+    await db.query(schemaSQL);
     console.log('Schema created successfully');
 
     // Read and execute seed.sql
     const seedSQL = fs.readFileSync(seedPath, 'utf8');
-    await db.none(seedSQL);
+    await db.query(seedSQL);
     console.log('Seed data inserted successfully');
 
     console.log('Database setup completed successfully');
