@@ -1,11 +1,25 @@
 const pgp = require('pg-promise')();
 require('dotenv').config();
 
-// Get database URL from Render or use local configuration
-const DATABASE_URL = process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+// Get database URL from environment
+const DATABASE_URL = process.env.DATABASE_URL;
+
+if (!DATABASE_URL) {
+  throw new Error('DATABASE_URL environment variable is not set');
+}
 
 // Configure pg-promise with the database URL
 const db = pgp(DATABASE_URL);
+
+// Test the connection
+db.connect()
+  .then(() => {
+    console.log('Successfully connected to database');
+  })
+  .catch((error) => {
+    console.error('Failed to connect to database:', error);
+    throw error;
+  });
 
 const setupDatabase = async () => {
   try {
