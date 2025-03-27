@@ -9,6 +9,8 @@ const { setupDatabase } = require('./config/database');
 const { setupRedis } = require('./config/redis');
 const { setupI18n } = require('./config/i18n');
 const { setupPassport } = require('./config/passport');
+const categoryRoutes = require('./routes/categoryRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
@@ -22,10 +24,12 @@ app.use(passport.initialize());
 setupI18n();
 app.use(i18nextMiddleware.handle(i18next));
 
-// Routes (to be implemented)
+// Routes
 app.use('/api/auth', require('./routes/auth'));
-app.use('/api/events', require('./routes/events'));
 app.use('/api/users', require('./routes/users'));
+app.use('/api/events', require('./routes/events'));
+app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Error handling
 app.use(errorHandler);
