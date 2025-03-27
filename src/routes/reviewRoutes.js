@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { isAuthenticated } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const {
   getEventReviews,
   createReview,
@@ -136,7 +136,7 @@ router.get('/event/:eventId', getEventReviews);
  *       403:
  *         description: User has already reviewed this event
  */
-router.post('/event/:eventId', isAuthenticated, [
+router.post('/event/:eventId', authenticate, [
   body('rating')
     .isInt({ min: 1, max: 5 })
     .withMessage('Rating must be between 1 and 5'),
@@ -200,7 +200,7 @@ router.post('/event/:eventId', isAuthenticated, [
  *       404:
  *         description: Review not found
  */
-router.put('/:id', isAuthenticated, [
+router.put('/:id', authenticate, [
   body('rating')
     .isInt({ min: 1, max: 5 })
     .withMessage('Rating must be between 1 and 5'),
@@ -242,6 +242,6 @@ router.put('/:id', isAuthenticated, [
  *       404:
  *         description: Review not found
  */
-router.delete('/:id', isAuthenticated, deleteReview);
+router.delete('/:id', authenticate, deleteReview);
 
 module.exports = router;
