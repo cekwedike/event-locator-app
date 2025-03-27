@@ -23,7 +23,19 @@ app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 
 // Setup i18n
-setupI18n();
+i18next
+  .use(i18nextMiddleware.LanguageDetector)
+  .init({
+    fallbackLng: 'en',
+    preload: ['en'],
+    resources: {
+      en: {
+        translation: {
+          // Add your translations here
+        }
+      }
+    }
+  });
 app.use(i18nextMiddleware.handle(i18next));
 
 // Routes

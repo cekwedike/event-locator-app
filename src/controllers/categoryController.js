@@ -61,7 +61,7 @@ const createCategory = async (req, res, next) => {
     );
 
     res.status(201).json({
-      message: req.t('categories.create.success'),
+      message: 'Category created successfully',
       category
     });
   } catch (error) {
@@ -85,11 +85,11 @@ const updateCategory = async (req, res, next) => {
     );
 
     if (!category) {
-      throw new NotFoundError(req.t('categories.update.notFound'));
+      throw new NotFoundError('Category not found');
     }
 
     res.json({
-      message: req.t('categories.update.success'),
+      message: 'Category updated successfully',
       category
     });
   } catch (error) {
@@ -106,11 +106,11 @@ const deleteCategory = async (req, res, next) => {
     );
 
     if (result.rowCount === 0) {
-      throw new NotFoundError(req.t('categories.delete.notFound'));
+      throw new NotFoundError('Category not found');
     }
 
     res.json({
-      message: req.t('categories.delete.success')
+      message: 'Category deleted successfully'
     });
   } catch (error) {
     next(error);
