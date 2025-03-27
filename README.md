@@ -29,8 +29,11 @@ A multi-user event locator application that allows users to discover events base
 - PostgreSQL (v12 or higher) with PostGIS extension
 - Redis
 - npm or yarn
+- Docker and Docker Compose (for containerized deployment)
 
 ## Installation
+
+### Local Development
 
 1. Clone the repository:
 ```bash
@@ -66,6 +69,65 @@ npm run migrate
 5. Start the development server:
 ```bash
 npm run dev
+```
+
+### Docker Development
+
+1. Clone the repository:
+```bash
+git clone <repository-url>
+cd event-locator-app
+```
+
+2. Create `.env` file as described above
+
+3. Start the development environment:
+```bash
+docker-compose up --build
+```
+
+The application will be available at `http://localhost:3000`
+
+## Deployment
+
+### Docker Deployment
+
+1. Build the Docker image:
+```bash
+docker build -t event-locator-app .
+```
+
+2. Run the container:
+```bash
+docker run -p 3000:3000 \
+  --env-file .env \
+  --name event-locator \
+  event-locator-app
+```
+
+### Production Deployment
+
+For production deployment, consider using:
+- A process manager like PM2
+- A reverse proxy (Nginx)
+- SSL/TLS certificates
+- A container orchestration platform (Kubernetes)
+
+Example Nginx configuration:
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    location / {
+        proxy_pass http://localhost:3000;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
+}
 ```
 
 ## Security Best Practices
