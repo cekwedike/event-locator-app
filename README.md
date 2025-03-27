@@ -46,6 +46,13 @@ npm install
 3. Set up environment variables:
 - Copy `.env.example` to `.env`
 - Update the variables in `.env` with your configuration
+- Generate a secure JWT secret:
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'));"
+```
+- Add the generated secret to your `.env` file as JWT_SECRET
+
+⚠️ IMPORTANT: Never commit your actual `.env` file or any real secrets to version control!
 
 4. Set up the database:
 ```bash
@@ -60,6 +67,25 @@ npm run migrate
 ```bash
 npm run dev
 ```
+
+## Security Best Practices
+
+1. Environment Variables:
+   - Never commit real secrets or credentials to version control
+   - Use strong, randomly generated values for secrets
+   - Keep your `.env` file secure and never share it
+   - Use different secrets for development, staging, and production
+
+2. Database:
+   - Use strong passwords
+   - Limit database user permissions
+   - Keep your database connection secure
+
+3. API Security:
+   - All endpoints are protected with JWT authentication
+   - Passwords are hashed using bcrypt
+   - Input validation on all routes
+   - Rate limiting on authentication routes
 
 ## Testing
 
