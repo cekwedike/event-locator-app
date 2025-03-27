@@ -69,9 +69,13 @@ const startServer = async () => {
     await setupDatabase();
     console.log('Database setup completed');
     
-    // Setup Redis
-    await setupRedis();
-    console.log('Redis setup completed');
+    // Setup Redis (but don't fail if it fails)
+    try {
+      await setupRedis();
+      console.log('Redis setup completed');
+    } catch (error) {
+      console.warn('Redis setup failed, continuing without Redis:', error.message);
+    }
     
     // Start the server
     const PORT = process.env.PORT || 3000;
@@ -80,7 +84,7 @@ const startServer = async () => {
       console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error('Failed to start server:', error.message);
     process.exit(1);
   }
 };

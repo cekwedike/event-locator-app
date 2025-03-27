@@ -16,6 +16,9 @@ const setupRedis = async () => {
       return null;
     }
 
+    console.log('Attempting to connect to Redis...');
+    console.log('Redis URL:', REDIS_URL.replace(/\/\/[^:]+:[^@]+@/, '//****:****@')); // Log URL without credentials
+
     redisClient = new Redis(REDIS_URL, {
       tls: {
         rejectUnauthorized: false
@@ -24,7 +27,14 @@ const setupRedis = async () => {
         const delay = Math.min(times * 50, 2000);
         return delay;
       },
-      maxRetriesPerRequest: 3
+      maxRetriesPerRequest: 3,
+      connectTimeout: 10000, // 10 seconds
+      commandTimeout: 5000,  // 5 seconds
+      keepAlive: 30000,      // 30 seconds
+      family: 4,             // IPv4
+      db: 0,
+      lazyConnect: true,     // Don't connect immediately
+      showFriendlyErrorStack: true
     });
 
     redisClient.on('connect', () => {
@@ -32,19 +42,35 @@ const setupRedis = async () => {
     });
 
     redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err);
+      console.error('Redis Client Error:', err.message);
+      if (err.code === 'ETIMEDOUT') {
+        console.error('Redis connection timed out. Please check your Redis URL and network connectivity.');
+      }
     });
 
     redisClient.on('reconnecting', () => {
       console.log('Redis Client Reconnecting...');
     });
 
-    await redisClient.ping();
-    console.log('Successfully connected to Redis');
-    return redisClient;
+    redisClient.on('close', () => {
+      console.log('Redis Client Connection Closed');
+    });
+
+    redisClient.on('end', () => {
+      console.log('Redis Client Connection Ended');
+    });
+
+    // Test the connection
+    try {
+      await redisClient.ping();
+      console.log('Successfully connected to Redis');
+      return redisClient;
+    } catch (error) {
+      console.error('Failed to ping Redis:', error.message);
+      return null;
+    }
   } catch (error) {
-    console.error('Redis setup failed:', error);
-    // Don't throw the error, just return null
+    console.error('Redis setup failed:', error.message);
     return null;
   }
 };
@@ -66,7 +92,7 @@ const publishNotification = async (channel, message) => {
     }
     await redisClient.publish(channel, JSON.stringify(message));
   } catch (error) {
-    console.error('Failed to publish notification:', error);
+    console.error('Failed to publish notification:', error.message);
   }
 };
 
