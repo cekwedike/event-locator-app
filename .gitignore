@@ -57,4 +57,7 @@ uploads/
 public/uploads/
 
 # Test database
-test.db 
+test.db
+
+# Keep SQL files
+!src/db/*.sql 
