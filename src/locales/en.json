@@ -1,0 +1,74 @@
+{
+  "auth": {
+    "register": {
+      "success": "Registration successful",
+      "error": "Registration failed",
+      "emailExists": "Email already exists"
+    },
+    "login": {
+      "success": "Login successful",
+      "error": "Invalid credentials",
+      "notFound": "User not found"
+    }
+  },
+  "events": {
+    "create": {
+      "success": "Event created successfully",
+      "error": "Failed to create event"
+    },
+    "update": {
+      "success": "Event updated successfully",
+      "error": "Failed to update event",
+      "notFound": "Event not found"
+    },
+    "delete": {
+      "success": "Event deleted successfully",
+      "error": "Failed to delete event",
+      "notFound": "Event not found"
+    },
+    "search": {
+      "noResults": "No events found",
+      "error": "Failed to search events"
+    }
+  },
+  "categories": {
+    "create": {
+      "success": "Category created successfully",
+      "error": "Failed to create category"
+    },
+    "update": {
+      "success": "Category updated successfully",
+      "error": "Failed to update category",
+      "notFound": "Category not found"
+    },
+    "delete": {
+      "success": "Category deleted successfully",
+      "error": "Failed to delete category",
+      "notFound": "Category not found"
+    }
+  },
+  "user": {
+    "preferences": {
+      "update": {
+        "success": "Preferences updated successfully",
+        "error": "Failed to update preferences"
+      }
+    },
+    "favorites": {
+      "add": {
+        "success": "Event added to favorites",
+        "error": "Failed to add event to favorites"
+      },
+      "remove": {
+        "success": "Event removed from favorites",
+        "error": "Failed to remove event from favorites"
+      }
+    }
+  },
+  "errors": {
+    "validation": "Validation error",
+    "unauthorized": "Unauthorized access",
+    "notFound": "Resource not found",
+    "server": "Internal server error"
+  }
+} 
