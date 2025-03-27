@@ -13,6 +13,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
+const setupDatabase = require('./db/setup');
 
 const app = express();
 
@@ -38,6 +39,16 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Error handling
 app.use(errorHandler);
+
+// Initialize database
+setupDatabase()
+  .then(() => {
+    console.log('Database initialized successfully');
+  })
+  .catch((error) => {
+    console.error('Failed to initialize database:', error);
+    process.exit(1);
+  });
 
 // Database and Redis setup
 const startServer = async () => {
