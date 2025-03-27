@@ -5,7 +5,6 @@ const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const passport = require('passport');
 const { errorHandler } = require('./middleware/errorHandler');
-const { setupDatabase } = require('./config/database');
 const { setupRedis } = require('./config/redis');
 const { setupI18n } = require('./config/i18n');
 const { setupPassport } = require('./config/passport');
@@ -39,16 +38,6 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
 // Error handling
 app.use(errorHandler);
-
-// Initialize database
-setupDatabase()
-  .then(() => {
-    console.log('Database initialized successfully');
-  })
-  .catch((error) => {
-    console.error('Failed to initialize database:', error);
-    process.exit(1);
-  });
 
 // Database and Redis setup
 const startServer = async () => {
