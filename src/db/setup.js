@@ -1,17 +1,18 @@
-const db = require('../config/database');
 const fs = require('fs');
 const path = require('path');
+const db = require('../config/database');
 
-const setupDatabase = async () => {
+async function setupDatabase() {
   try {
-    // Get absolute paths
+    console.log('Starting database setup...');
+    
+    // Get absolute paths for SQL files
     const schemaPath = path.join(__dirname, 'schema.sql');
     const seedPath = path.join(__dirname, 'seed.sql');
-
-    console.log('Current directory:', __dirname);
+    
     console.log('Schema file path:', schemaPath);
     console.log('Seed file path:', seedPath);
-
+    
     // Check if files exist
     if (!fs.existsSync(schemaPath)) {
       throw new Error(`Schema file not found at ${schemaPath}`);
@@ -19,23 +20,25 @@ const setupDatabase = async () => {
     if (!fs.existsSync(seedPath)) {
       throw new Error(`Seed file not found at ${seedPath}`);
     }
-
-    // Read and execute schema.sql
+    
+    // Read SQL files
     const schemaSQL = fs.readFileSync(schemaPath, 'utf8');
-    await db.query(schemaSQL);
-    console.log('Schema created successfully');
-
-    // Read and execute seed.sql
     const seedSQL = fs.readFileSync(seedPath, 'utf8');
+    
+    console.log('Executing schema SQL...');
+    await db.query(schemaSQL);
+    console.log('Schema SQL executed successfully');
+    
+    console.log('Executing seed SQL...');
     await db.query(seedSQL);
-    console.log('Seed data inserted successfully');
-
+    console.log('Seed SQL executed successfully');
+    
     console.log('Database setup completed successfully');
   } catch (error) {
-    console.error('Error setting up database:', error);
+    console.error('Database setup failed:', error);
     throw error;
   }
-};
+}
 
 // Run setup if this file is executed directly
 if (require.main === module) {
