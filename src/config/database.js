@@ -1,8 +1,8 @@
 const pgp = require('pg-promise')();
 require('dotenv').config();
 
-// Get database URL from Heroku or use local configuration
-const DATABASE_URL = process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+// Get database URL from Railway or use local configuration
+const DATABASE_URL = process.env.RAILWAY_DATABASE_URL || process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
 // Configure pg-promise with the database URL
 const db = pgp(DATABASE_URL);

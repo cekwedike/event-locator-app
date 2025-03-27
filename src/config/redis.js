@@ -1,8 +1,8 @@
 const Redis = require('redis');
 require('dotenv').config();
 
-// Get Redis URL from Heroku or use local configuration
-const REDIS_URL = process.env.REDIS_URL || `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
+// Get Redis URL from Railway or use local configuration
+const REDIS_URL = process.env.RAILWAY_REDIS_URL || process.env.REDIS_URL || `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 
 const redisClient = Redis.createClient({
   url: REDIS_URL,
