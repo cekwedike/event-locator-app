@@ -1,24 +1,38 @@
-# Use Node.js LTS version
-FROM node:18-alpine
+# Development stage
+FROM node:18-alpine AS development
 
-# Create app directory
-WORKDIR /usr/src/app
-
-# Copy package files
-COPY package*.json ./
+WORKDIR /app
 
 # Install dependencies
-RUN npm ci --only=production
+COPY package*.json ./
+RUN npm install
 
-# Copy app source
+# Copy source code
 COPY . .
-
-# Create a non-root user
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-USER appuser
 
 # Expose port
 EXPOSE 3000
 
-# Start the application
+# Start development server
+CMD ["npm", "run", "dev"]
+
+# Production stage
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Install dependencies
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy source code
+COPY . .
+
+# Build application (if needed)
+# RUN npm run build
+
+# Expose port
+EXPOSE 3000
+
+# Start production server
 CMD ["npm", "start"] 

@@ -1,34 +1,50 @@
 {
   "name": "event-locator-app",
   "version": "1.0.0",
-  "description": "A multi-user event locator application with geospatial features",
+  "description": "Event Locator Application",
   "main": "src/app.js",
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "jest",
-    "lint": "eslint ."
+    "test": "mocha --require @babel/register --require dotenv/config 'src/tests/**/*.test.js' --timeout 10000 --exit",
+    "test:watch": "mocha --require @babel/register --require dotenv/config 'src/tests/**/*.test.js' --watch",
+    "test:coverage": "nyc npm test",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "db:migrate": "node-pg-migrate up",
+    "db:migrate:down": "node-pg-migrate down",
+    "db:seed": "psql -d event_locator -f src/db/seed.sql",
+    "db:reset": "psql -d event_locator -f src/db/schema.sql && npm run db:seed"
   },
   "dependencies": {
-    "express": "^4.18.2",
-    "pg": "^8.11.3",
-    "pg-promise": "^11.5.4",
     "bcryptjs": "^2.4.3",
-    "jsonwebtoken": "^9.0.2",
-    "passport": "^0.7.0",
-    "passport-jwt": "^4.0.1",
-    "i18next": "^23.7.16",
-    "i18next-http-middleware": "^3.5.0",
-    "express-validator": "^7.0.1",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "winston": "^3.11.0",
-    "redis": "^4.6.13"
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "i18next": "^23.4.6",
+    "i18next-http-middleware": "^3.2.2",
+    "jsonwebtoken": "^9.0.0",
+    "passport": "^0.6.0",
+    "passport-jwt": "^4.0.1",
+    "pg-promise": "^11.5.4",
+    "redis": "^4.6.7",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0",
-    "nodemon": "^3.0.2",
-    "eslint": "^8.56.0",
-    "supertest": "^6.3.4"
+    "@babel/core": "^7.22.5",
+    "@babel/register": "^7.22.5",
+    "chai": "^4.3.7",
+    "eslint": "^8.42.0",
+    "eslint-config-airbnb-base": "^15.0.0",
+    "eslint-plugin-import": "^2.27.5",
+    "mocha": "^10.2.0",
+    "nodemon": "^2.0.22",
+    "nyc": "^15.1.0",
+    "supertest": "^6.3.3"
+  },
+  "engines": {
+    "node": ">=14.0.0"
   }
 } 
