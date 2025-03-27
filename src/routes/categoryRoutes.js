@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
-const { isAuthenticated, isAdmin } = require('../middleware/auth');
+const { authenticate, isAdmin } = require('../middleware/auth');
 const {
   getCategories,
   getCategory,
@@ -128,7 +128,7 @@ router.get('/:id', getCategory);
  *       403:
  *         description: Not authorized
  */
-router.post('/', isAuthenticated, isAdmin, [
+router.post('/', authenticate, isAdmin, [
   body('name')
     .trim()
     .notEmpty()
@@ -191,7 +191,7 @@ router.post('/', isAuthenticated, isAdmin, [
  *       404:
  *         description: Category not found
  */
-router.put('/:id', isAuthenticated, isAdmin, [
+router.put('/:id', authenticate, isAdmin, [
   body('name')
     .trim()
     .notEmpty()
@@ -235,6 +235,6 @@ router.put('/:id', isAuthenticated, isAdmin, [
  *       404:
  *         description: Category not found
  */
-router.delete('/:id', isAuthenticated, isAdmin, deleteCategory);
+router.delete('/:id', authenticate, isAdmin, deleteCategory);
 
 module.exports = router; 
