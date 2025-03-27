@@ -8,8 +8,13 @@ if (!DATABASE_URL) {
   throw new Error('DATABASE_URL environment variable is not set');
 }
 
-// Configure pg-promise with the database URL
-const db = pgp(DATABASE_URL);
+// Configure pg-promise with the database URL and SSL
+const db = pgp({
+  connectionString: DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false // Required for Render's PostgreSQL
+  }
+});
 
 // Test the connection
 db.connect()
