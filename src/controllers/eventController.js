@@ -307,10 +307,117 @@ const searchEvents = async (req, res, next) => {
   }
 };
 
+// Add categories to an event
+const addEventCategories = async (req, res, next) => {
+  try {
+    const { eventId } = req.params;
+    const { categoryIds } = req.body;
+
+    // Verify event exists and user has permission
+    const event = await db.oneOrNone(
+      'SELECT * FROM events WHERE id = $1',
+      [eventId]
+    );
+
+    if (!event) {
+      throw new NotFoundError('Event not found');
+    }
+
+    if (event.user_id !== req.user.id && !req.user.is_admin) {
+      throw new ForbiddenError('Not authorized to modify this event');
+    }
+
+    // Add categories
+    await db.tx(async t => {
+      // Remove existing categories
+      await t.none('DELETE FROM event_categories WHERE event_id = $1', [eventId]);
+      
+      // Add new categories
+      if (categoryIds && categoryIds.length > 0) {
+        const values = categoryIds.map(catId => `(${eventId}, ${catId})`).join(',');
+        await t.none(
+          `INSERT INTO event_categories (event_id, category_id)
+           VALUES ${values}
+           ON CONFLICT DO NOTHING`
+        );
+      }
+    });
+
+    // Get updated event with categories
+    const updatedEvent = await db.one(
+      `SELECT e.*, 
+              array_agg(DISTINCT c.id) as category_ids,
+              array_agg(DISTINCT c.name) as category_names
+       FROM events e
+       LEFT JOIN event_categories ec ON e.id = ec.event_id
+       LEFT JOIN categories c ON ec.category_id = c.id
+       WHERE e.id = $1
+       GROUP BY e.id`,
+      [eventId]
+    );
+
+    res.json({
+      message: req.t('events.categories.update.success'),
+      event: updatedEvent
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+// Get events by category
+const getEventsByCategory = async (req, res, next) => {
+  try {
+    const { categoryId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+
+    const offset = (page - 1) * limit;
+    const events = await db.any(
+      `SELECT e.*, 
+              u.username as organizer_name,
+              u.avatar_url as organizer_avatar,
+              COUNT(DISTINCT r.id) as review_count,
+              COALESCE(AVG(r.rating), 0) as average_rating
+       FROM events e
+       JOIN event_categories ec ON e.id = ec.event_id
+       JOIN users u ON e.user_id = u.id
+       LEFT JOIN reviews r ON e.id = r.event_id
+       WHERE ec.category_id = $1
+       GROUP BY e.id, u.username, u.avatar_url
+       ORDER BY e.start_date ASC
+       LIMIT $2 OFFSET $3`,
+      [categoryId, limit, offset]
+    );
+
+    // Get total count
+    const total = await db.one(
+      `SELECT COUNT(DISTINCT e.id)
+       FROM events e
+       JOIN event_categories ec ON e.id = ec.event_id
+       WHERE ec.category_id = $1`,
+      [categoryId]
+    );
+
+    res.json({
+      events,
+      pagination: {
+        total: parseInt(total.count),
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total.count / limit)
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   createEvent,
   getEvent,
   updateEvent,
   deleteEvent,
-  searchEvents
+  searchEvents,
+  addEventCategories,
+  getEventsByCategory
 }; 
