@@ -1,8 +1,11 @@
 const pgp = require('pg-promise')();
-const { DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD } = process.env;
+require('dotenv').config();
 
-const connectionString = `postgresql://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}`;
-const db = pgp(connectionString);
+// Get database URL from Heroku or use local configuration
+const DATABASE_URL = process.env.DATABASE_URL || `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
+
+// Configure pg-promise with the database URL
+const db = pgp(DATABASE_URL);
 
 const setupDatabase = async () => {
   try {

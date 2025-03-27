@@ -1,9 +1,16 @@
 const Redis = require('redis');
-const { REDIS_HOST, REDIS_PORT } = process.env;
+require('dotenv').config();
+
+// Get Redis URL from Heroku or use local configuration
+const REDIS_URL = process.env.REDIS_URL || `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`;
 
 const redisClient = Redis.createClient({
-  url: `redis://${REDIS_HOST}:${REDIS_PORT}`
+  url: REDIS_URL,
+  password: process.env.REDIS_PASSWORD
 });
+
+redisClient.on('error', (err) => console.error('Redis Client Error', err));
+redisClient.on('connect', () => console.log('Redis Client Connected'));
 
 const setupRedis = async () => {
   try {
