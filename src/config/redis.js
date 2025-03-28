@@ -118,23 +118,40 @@ const setupRedis = async () => {
 
     // Test the connection with a timeout
     try {
+      console.log('Waiting for Redis connection...');
       // Wait for the connection to be established
       await new Promise((resolve, reject) => {
         const timeout = setTimeout(() => {
+          console.log('Redis connection timeout reached');
           reject(new Error('Redis connection timeout'));
         }, 10000);
 
-        redisClient.once('connect', () => {
+        const connectHandler = () => {
+          console.log('Redis connection event received');
           clearTimeout(timeout);
           resolve();
-        });
+        };
 
-        redisClient.once('error', (err) => {
+        const errorHandler = (err) => {
+          console.log('Redis connection error received:', err.message);
           clearTimeout(timeout);
           reject(err);
-        });
+        };
+
+        redisClient.once('connect', connectHandler);
+        redisClient.once('error', errorHandler);
+
+        // Clean up event listeners if promise is rejected
+        const cleanup = () => {
+          redisClient.removeListener('connect', connectHandler);
+          redisClient.removeListener('error', errorHandler);
+        };
+
+        // Add cleanup to promise
+        Promise.prototype.finally.call(reject, cleanup);
       });
 
+      console.log('Testing Redis connection with ping...');
       // Test the connection with a ping
       await redisClient.ping();
       console.log('Successfully connected to Redis');
@@ -143,7 +160,9 @@ const setupRedis = async () => {
       console.error('Failed to connect to Redis:', error.message);
       if (redisClient) {
         try {
+          console.log('Attempting to close Redis connection...');
           await redisClient.quit();
+          console.log('Redis connection closed successfully');
         } catch (quitError) {
           console.error('Error while closing Redis connection:', quitError.message);
         }
