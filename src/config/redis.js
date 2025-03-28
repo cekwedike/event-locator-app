@@ -4,184 +4,76 @@ require('dotenv').config();
 let redisClient = null;
 let connectionAttempts = 0;
 const MAX_CONNECTION_ATTEMPTS = 5;
-let isConnecting = false;
+const CONNECTION_TIMEOUT = 30000; // 30 seconds
+const COMMAND_TIMEOUT = 10000; // 10 seconds
 
 const setupRedis = async () => {
-  try {
-    // If already connecting or connected, return existing client
-    if (isConnecting || redisClient) {
-      console.log('Redis connection already in progress or client exists');
-      return redisClient;
-    }
-
-    const REDIS_URL = process.env.REDIS_URL;
-    if (!REDIS_URL) {
-      console.warn('REDIS_URL environment variable is not set, Redis functionality will be disabled');
-      return null;
-    }
-
-    console.log('Attempting to connect to Redis...');
-    
-    // Format Redis URL properly
-    let formattedUrl = REDIS_URL;
-    if (!formattedUrl.startsWith('redis://')) {
-      formattedUrl = `redis://${formattedUrl}`;
-    }
-    
-    // Log Redis URL without credentials for debugging
-    const maskedUrl = formattedUrl.replace(/\/\/[^:]+:[^@]+@/, '//****:****@');
-    console.log('Redis URL:', maskedUrl);
-
-    // Parse Redis URL to check format
-    try {
-      const url = new URL(formattedUrl);
-      if (!url.protocol.startsWith('redis')) {
-        console.error('Invalid Redis URL protocol:', url.protocol);
-        return null;
-      }
-    } catch (error) {
-      console.error('Invalid Redis URL format:', error.message);
-      return null;
-    }
-
-    isConnecting = true;
-    connectionAttempts = 0;
-
-    redisClient = new Redis(formattedUrl, {
-      tls: {
-        rejectUnauthorized: false
-      },
-      retryStrategy: (times) => {
-        connectionAttempts++;
-        if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
-          console.log('Max Redis connection attempts reached, giving up');
-          isConnecting = false;
-          return null; // Stop retrying
-        }
-        const delay = Math.min(times * 100, 1000);
-        console.log(`Retrying Redis connection in ${delay}ms (attempt ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS})`);
-        return delay;
-      },
-      maxRetriesPerRequest: 3,
-      connectTimeout: 10000,
-      commandTimeout: 5000,
-      keepAlive: 30000,
-      family: 4,
-      db: 0,
-      lazyConnect: false,
-      showFriendlyErrorStack: true,
-      enableOfflineQueue: true,
-      reconnectOnError: (err) => {
-        if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
-          isConnecting = false;
-          return false; // Stop reconnecting
-        }
-        const targetError = 'READONLY';
-        if (err.message.includes(targetError)) {
-          return true;
-        }
-        return false;
-      }
-    });
-
-    // Set up event handlers
-    redisClient.on('connect', () => {
-      console.log('Redis Client Connected');
-      connectionAttempts = 0;
-      isConnecting = false;
-    });
-
-    redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err.message);
-      if (err.code === 'ETIMEDOUT') {
-        console.error('Redis connection timed out. Please check your Redis URL and network connectivity.');
-      } else if (err.code === 'ECONNREFUSED') {
-        console.error('Redis connection refused. Please check if Redis server is running and accessible.');
-      } else if (err.code === 'ENOTFOUND') {
-        console.error('Redis host not found. Please check your Redis URL.');
-      }
-    });
-
-    redisClient.on('reconnecting', () => {
-      console.log('Redis Client Reconnecting...');
-    });
-
-    redisClient.on('close', () => {
-      console.log('Redis Client Connection Closed');
-      isConnecting = false;
-    });
-
-    redisClient.on('end', () => {
-      console.log('Redis Client Connection Ended');
-      isConnecting = false;
-    });
-
-    // Test the connection with a timeout
-    try {
-      console.log('Waiting for Redis connection...');
-      // Wait for the connection to be established
-      await new Promise((resolve, reject) => {
-        const timeout = setTimeout(() => {
-          console.log('Redis connection timeout reached');
-          reject(new Error('Redis connection timeout'));
-        }, 10000);
-
-        const connectHandler = () => {
-          console.log('Redis connection event received');
-          clearTimeout(timeout);
-          resolve();
-        };
-
-        const errorHandler = (err) => {
-          console.log('Redis connection error received:', err.message);
-          clearTimeout(timeout);
-          reject(err);
-        };
-
-        redisClient.once('connect', connectHandler);
-        redisClient.once('error', errorHandler);
-
-        // Clean up event listeners if promise is rejected
-        const cleanup = () => {
-          redisClient.removeListener('connect', connectHandler);
-          redisClient.removeListener('error', errorHandler);
-        };
-
-        // Add cleanup to promise
-        Promise.prototype.finally.call(reject, cleanup);
-      });
-
-      console.log('Testing Redis connection with ping...');
-      // Test the connection with a ping
-      await redisClient.ping();
-      console.log('Successfully connected to Redis');
-      return redisClient;
-    } catch (error) {
-      console.error('Failed to connect to Redis:', error.message);
-      if (redisClient) {
-        try {
-          console.log('Attempting to close Redis connection...');
-          await redisClient.quit();
-          console.log('Redis connection closed successfully');
-        } catch (quitError) {
-          console.error('Error while closing Redis connection:', quitError.message);
-        }
-      }
-      isConnecting = false;
-      return null;
-    }
-  } catch (error) {
-    console.error('Redis setup failed:', error.message);
-    isConnecting = false;
+  const REDIS_URL = process.env.REDIS_URL;
+  
+  if (!REDIS_URL) {
+    console.log('No Redis URL provided, Redis will be disabled');
     return null;
   }
+
+  console.log('Attempting to connect to Redis...');
+  console.log('Redis URL:', REDIS_URL);
+
+  return new Promise((resolve, reject) => {
+    try {
+      redisClient = new Redis(REDIS_URL, {
+        connectTimeout: CONNECTION_TIMEOUT,
+        commandTimeout: COMMAND_TIMEOUT,
+        retryStrategy: (times) => {
+          if (times > MAX_CONNECTION_ATTEMPTS) {
+            console.log('Max Redis connection attempts reached');
+            return null;
+          }
+          const delay = Math.min(times * 1000, 3000);
+          return delay;
+        },
+        maxRetriesPerRequest: 3,
+        enableOfflineQueue: true,
+        lazyConnect: false
+      });
+
+      redisClient.on('connect', () => {
+        console.log('Successfully connected to Redis');
+        connectionAttempts = 0;
+        resolve(redisClient);
+      });
+
+      redisClient.on('error', (error) => {
+        console.error('Redis connection error:', error.message);
+        if (error.code === 'ETIMEDOUT') {
+          console.log('Redis connection timeout, will retry...');
+        } else if (error.code === 'ECONNREFUSED') {
+          console.log('Redis connection refused, will retry...');
+        }
+      });
+
+      redisClient.on('close', () => {
+        console.log('Redis connection closed');
+      });
+
+      redisClient.on('reconnecting', () => {
+        console.log('Reconnecting to Redis...');
+      });
+
+      // Test the connection
+      redisClient.ping().then(() => {
+        console.log('Redis ping successful');
+      }).catch((error) => {
+        console.error('Redis ping failed:', error.message);
+      });
+
+    } catch (error) {
+      console.error('Failed to create Redis client:', error.message);
+      reject(error);
+    }
+  });
 };
 
 const getRedisClient = () => {
-  if (!redisClient) {
-    console.warn('Redis client not initialized');
-    return null;
-  }
   return redisClient;
 };
 
