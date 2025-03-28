@@ -68,9 +68,9 @@ const setupRedis = async () => {
       keepAlive: 30000,
       family: 4,
       db: 0,
-      lazyConnect: true,
+      lazyConnect: false,
       showFriendlyErrorStack: true,
-      enableOfflineQueue: false,
+      enableOfflineQueue: true,
       reconnectOnError: (err) => {
         if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
           isConnecting = false;
@@ -118,16 +118,29 @@ const setupRedis = async () => {
 
     // Test the connection with a timeout
     try {
-      const pingPromise = redisClient.ping();
-      const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Redis ping timeout')), 5000);
+      // Wait for the connection to be established
+      await new Promise((resolve, reject) => {
+        const timeout = setTimeout(() => {
+          reject(new Error('Redis connection timeout'));
+        }, 10000);
+
+        redisClient.once('connect', () => {
+          clearTimeout(timeout);
+          resolve();
+        });
+
+        redisClient.once('error', (err) => {
+          clearTimeout(timeout);
+          reject(err);
+        });
       });
 
-      await Promise.race([pingPromise, timeoutPromise]);
+      // Test the connection with a ping
+      await redisClient.ping();
       console.log('Successfully connected to Redis');
       return redisClient;
     } catch (error) {
-      console.error('Failed to ping Redis:', error.message);
+      console.error('Failed to connect to Redis:', error.message);
       if (redisClient) {
         try {
           await redisClient.quit();
