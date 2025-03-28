@@ -14,10 +14,6 @@ const options = {
     },
     servers: [
       {
-        url: 'http://localhost:3000',
-        description: 'Development server'
-      },
-      {
         url: 'https://event-locator-app.onrender.com',
         description: 'Production server'
       }
