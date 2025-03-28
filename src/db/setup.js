@@ -26,11 +26,11 @@ async function setupDatabase() {
     const seedSQL = fs.readFileSync(seedPath, 'utf8');
     
     console.log('Executing schema SQL...');
-    await db.query(schemaSQL);
+    await db.none(schemaSQL);
     console.log('Schema SQL executed successfully');
     
     console.log('Executing seed SQL...');
-    await db.query(seedSQL);
+    await db.none(seedSQL);
     console.log('Seed SQL executed successfully');
     
     console.log('Database setup completed successfully');
