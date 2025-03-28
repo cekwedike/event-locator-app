@@ -17,13 +17,20 @@ const setupRedis = async () => {
     }
 
     console.log('Attempting to connect to Redis...');
+    
+    // Format Redis URL properly
+    let formattedUrl = REDIS_URL;
+    if (!formattedUrl.startsWith('redis://')) {
+      formattedUrl = `redis://${formattedUrl}`;
+    }
+    
     // Log Redis URL without credentials for debugging
-    const maskedUrl = REDIS_URL.replace(/\/\/[^:]+:[^@]+@/, '//****:****@');
+    const maskedUrl = formattedUrl.replace(/\/\/[^:]+:[^@]+@/, '//****:****@');
     console.log('Redis URL:', maskedUrl);
 
     // Parse Redis URL to check format
     try {
-      const url = new URL(REDIS_URL);
+      const url = new URL(formattedUrl);
       if (!url.protocol.startsWith('redis')) {
         console.error('Invalid Redis URL protocol:', url.protocol);
         return null;
@@ -33,24 +40,24 @@ const setupRedis = async () => {
       return null;
     }
 
-    redisClient = new Redis(REDIS_URL, {
+    redisClient = new Redis(formattedUrl, {
       tls: {
         rejectUnauthorized: false
       },
       retryStrategy: (times) => {
-        const delay = Math.min(times * 100, 3000); // Increased delay
+        const delay = Math.min(times * 100, 3000);
         console.log(`Retrying Redis connection in ${delay}ms (attempt ${times})`);
         return delay;
       },
-      maxRetriesPerRequest: 5, // Increased retries
-      connectTimeout: 20000,    // Increased timeout to 20 seconds
-      commandTimeout: 10000,    // Increased command timeout to 10 seconds
-      keepAlive: 30000,        // 30 seconds
-      family: 4,               // IPv4
+      maxRetriesPerRequest: 5,
+      connectTimeout: 20000,
+      commandTimeout: 10000,
+      keepAlive: 30000,
+      family: 4,
       db: 0,
-      lazyConnect: true,       // Don't connect immediately
+      lazyConnect: true,
       showFriendlyErrorStack: true,
-      enableOfflineQueue: false, // Disable offline queue to prevent hanging
+      enableOfflineQueue: true, // Enable offline queue to handle reconnection
       reconnectOnError: (err) => {
         const targetError = 'READONLY';
         if (err.message.includes(targetError)) {

@@ -71,6 +71,8 @@ const startServer = async () => {
     
     // Setup Redis (but don't fail if it fails)
     let redisStatus = 'disabled';
+    let redisError = null;
+    
     try {
       const redisClient = await setupRedis();
       if (redisClient) {
@@ -78,10 +80,12 @@ const startServer = async () => {
         console.log('Redis setup completed');
       } else {
         redisStatus = 'failed';
+        redisError = 'Redis connection failed';
         console.warn('Redis setup failed, continuing without Redis');
       }
     } catch (error) {
       redisStatus = 'error';
+      redisError = error.message;
       console.warn('Redis setup failed, continuing without Redis:', error.message);
     }
     
@@ -90,7 +94,10 @@ const startServer = async () => {
       res.json({
         status: 'ok',
         database: 'connected',
-        redis: redisStatus,
+        redis: {
+          status: redisStatus,
+          error: redisError
+        },
         timestamp: new Date().toISOString()
       });
     });
@@ -101,6 +108,9 @@ const startServer = async () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
       console.log(`Health check available at http://localhost:${PORT}/health`);
+      if (redisStatus !== 'connected') {
+        console.log('Note: Redis is not connected. Some features may be limited.');
+      }
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);
