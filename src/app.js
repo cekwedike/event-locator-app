@@ -50,10 +50,7 @@ i18next
   });
 app.use(i18nextMiddleware.handle(i18next));
 
-// Serve static files from the public directory
-app.use(express.static(path.join(__dirname, '../public')));
-
-// API Routes
+// API Routes (must come before static file serving)
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/events', require('./routes/events'));
@@ -63,18 +60,21 @@ app.use('/api/reviews', reviewRoutes);
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
-// Root route handler
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    database: 'connected',
+    redis: {
+      status: 'disabled', // Will be updated in startServer
+      error: null
+    },
+    timestamp: new Date().toISOString()
+  });
 });
 
-// Catch-all route for SPA (should be last)
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
-
-// Error handling
-app.use((err, req, res, next) => {
+// Error handling for API routes
+app.use('/api/*', (err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
     success: false,
@@ -109,8 +109,8 @@ const startServer = async () => {
       redisError = error.message;
       console.warn('Redis setup failed, continuing without Redis:', error.message);
     }
-    
-    // Add health check endpoint
+
+    // Update health check endpoint with Redis status
     app.get('/health', (req, res) => {
       res.json({
         status: 'ok',
@@ -121,6 +121,19 @@ const startServer = async () => {
         },
         timestamp: new Date().toISOString()
       });
+    });
+    
+    // Serve static files from the public directory
+    app.use(express.static(path.join(__dirname, '../public')));
+
+    // Root route handler
+    app.get('/', (req, res) => {
+      res.sendFile(path.join(__dirname, '../public/index.html'));
+    });
+
+    // Catch-all route for SPA (must be last)
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(__dirname, '../public/index.html'));
     });
     
     // Start the server
