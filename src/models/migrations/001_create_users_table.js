@@ -1,6 +1,7 @@
 exports.name = '001_create_users_table';
 
 exports.up = async (db) => {
+  // First create the table
   await db.none(`
     CREATE TABLE IF NOT EXISTS users (
       id SERIAL PRIMARY KEY,
@@ -14,10 +15,22 @@ exports.up = async (db) => {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
-
-    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    CREATE INDEX IF NOT EXISTS idx_users_location ON users USING GIST(location);
   `);
+
+  // Then create the indexes separately
+  await db.none('CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);');
+  
+  // Create the GIST index only if the location column exists
+  const locationExists = await db.oneOrNone(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'users' 
+    AND column_name = 'location';
+  `);
+
+  if (locationExists) {
+    await db.none('CREATE INDEX IF NOT EXISTS idx_users_location ON users USING GIST(location);');
+  }
 };
 
 exports.down = async (db) => {
