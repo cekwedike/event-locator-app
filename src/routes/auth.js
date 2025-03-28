@@ -29,6 +29,42 @@ const loginValidation = [
 
 /**
  * @swagger
+ * components:
+ *   schemas:
+ *     User:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           description: The auto-generated id of the user
+ *         email:
+ *           type: string
+ *           format: email
+ *         firstName:
+ *           type: string
+ *         lastName:
+ *           type: string
+ *         location:
+ *           type: object
+ *           properties:
+ *             latitude:
+ *               type: number
+ *             longitude:
+ *               type: number
+ *         created_at:
+ *           type: string
+ *           format: date-time
+ *         updated_at:
+ *           type: string
+ *           format: date-time
+ *       required:
+ *         - email
+ *         - firstName
+ *         - lastName
+ */
+
+/**
+ * @swagger
  * /api/auth/register:
  *   post:
  *     summary: Register a new user
@@ -76,7 +112,7 @@ const loginValidation = [
  *                 token:
  *                   type: string
  *                 user:
- *                   type: object
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Invalid input
  *       409:
@@ -118,7 +154,7 @@ router.post('/register', registerValidation, register);
  *                 token:
  *                   type: string
  *                 user:
- *                   type: object
+ *                   $ref: '#/components/schemas/User'
  *       400:
  *         description: Invalid input
  *       401:

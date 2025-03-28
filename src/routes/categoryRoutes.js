@@ -51,30 +51,39 @@ const {
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 categories:
- *                   type: array
- *                   items:
- *                     $ref: '#/components/schemas/Category'
- *             example:
- *               categories:
- *                 - id: 1
- *                   name: "Music"
- *                   description: "Music events and concerts"
- *                   event_count: 5
- *                   created_at: "2024-03-28T10:11:00.432Z"
- *                   updated_at: "2024-03-28T10:11:00.432Z"
- *                 - id: 2
- *                   name: "Sports"
- *                   description: "Sports events and tournaments"
- *                   event_count: 3
- *                   created_at: "2024-03-28T10:12:00.432Z"
- *                   updated_at: "2024-03-28T10:12:00.432Z"
- *       500:
- *         description: Server error
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Category'
+ *   post:
+ *     summary: Create a new category
+ *     tags: [Categories]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *             properties:
+ *               name:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Category created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Category'
+ *       401:
+ *         description: Unauthorized
+ *       403:
+ *         description: Forbidden - Admin access required
  */
-router.get('/', getCategories);
 
 /**
  * @swagger
@@ -95,72 +104,9 @@ router.get('/', getCategories);
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 category:
- *                   $ref: '#/components/schemas/Category'
+ *               $ref: '#/components/schemas/Category'
  *       404:
  *         description: Category not found
- */
-router.get('/:id', getCategory);
-
-/**
- * @swagger
- * /api/categories:
- *   post:
- *     summary: Create a new category
- *     tags: [Categories]
- *     security:
- *       - bearerAuth: []
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               name:
- *                 type: string
- *                 description: Category name
- *               description:
- *                 type: string
- *                 description: Category description
- *             required:
- *               - name
- *     responses:
- *       201:
- *         description: Category created successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 category:
- *                   $ref: '#/components/schemas/Category'
- *       400:
- *         description: Invalid input
- *       403:
- *         description: Not authorized
- */
-router.post('/', authenticate, isAdmin, [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Category name is required')
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Category name must be between 2 and 50 characters'),
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must not exceed 500 characters')
-], createCategory);
-
-/**
- * @swagger
- * /api/categories/{id}:
  *   put:
  *     summary: Update a category
  *     tags: [Categories]
@@ -182,48 +128,21 @@ router.post('/', authenticate, isAdmin, [
  *             properties:
  *               name:
  *                 type: string
- *                 description: Category name
  *               description:
  *                 type: string
- *                 description: Category description
- *             required:
- *               - name
  *     responses:
  *       200:
  *         description: Category updated successfully
  *         content:
  *           application/json:
  *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 category:
- *                   $ref: '#/components/schemas/Category'
- *       400:
- *         description: Invalid input
+ *               $ref: '#/components/schemas/Category'
+ *       401:
+ *         description: Unauthorized
  *       403:
- *         description: Not authorized
+ *         description: Forbidden - Admin access required
  *       404:
  *         description: Category not found
- */
-router.put('/:id', authenticate, isAdmin, [
-  body('name')
-    .trim()
-    .notEmpty()
-    .withMessage('Category name is required')
-    .isLength({ min: 2, max: 50 })
-    .withMessage('Category name must be between 2 and 50 characters'),
-  body('description')
-    .optional()
-    .trim()
-    .isLength({ max: 500 })
-    .withMessage('Description must not exceed 500 characters')
-], updateCategory);
-
-/**
- * @swagger
- * /api/categories/{id}:
  *   delete:
  *     summary: Delete a category
  *     tags: [Categories]
@@ -237,20 +156,21 @@ router.put('/:id', authenticate, isAdmin, [
  *           type: integer
  *         description: Category ID
  *     responses:
- *       200:
+ *       204:
  *         description: Category deleted successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
+ *       401:
+ *         description: Unauthorized
  *       403:
- *         description: Not authorized
+ *         description: Forbidden - Admin access required
  *       404:
  *         description: Category not found
  */
+
+// Routes
+router.get('/', getCategories);
+router.get('/:id', getCategory);
+router.post('/', authenticate, isAdmin, createCategory);
+router.put('/:id', authenticate, isAdmin, updateCategory);
 router.delete('/:id', authenticate, isAdmin, deleteCategory);
 
 module.exports = router; 
