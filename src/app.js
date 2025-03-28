@@ -70,18 +70,37 @@ const startServer = async () => {
     console.log('Database setup completed');
     
     // Setup Redis (but don't fail if it fails)
+    let redisStatus = 'disabled';
     try {
-      await setupRedis();
-      console.log('Redis setup completed');
+      const redisClient = await setupRedis();
+      if (redisClient) {
+        redisStatus = 'connected';
+        console.log('Redis setup completed');
+      } else {
+        redisStatus = 'failed';
+        console.warn('Redis setup failed, continuing without Redis');
+      }
     } catch (error) {
+      redisStatus = 'error';
       console.warn('Redis setup failed, continuing without Redis:', error.message);
     }
+    
+    // Add health check endpoint
+    app.get('/health', (req, res) => {
+      res.json({
+        status: 'ok',
+        database: 'connected',
+        redis: redisStatus,
+        timestamp: new Date().toISOString()
+      });
+    });
     
     // Start the server
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
       console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
+      console.log(`Health check available at http://localhost:${PORT}/health`);
     });
   } catch (error) {
     console.error('Failed to start server:', error.message);
