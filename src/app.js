@@ -63,12 +63,25 @@ app.use('/api/reviews', reviewRoutes);
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ok',
+    database: 'connected',
+    redis: {
+      status: redisStatus,
+      error: redisError
+    },
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Root route handler
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
-// Catch-all route for SPA
+// Catch-all route for SPA (should be last)
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, '../public/index.html'));
 });
@@ -109,19 +122,6 @@ const startServer = async () => {
       redisError = error.message;
       console.warn('Redis setup failed, continuing without Redis:', error.message);
     }
-    
-    // Add health check endpoint
-    app.get('/health', (req, res) => {
-      res.json({
-        status: 'ok',
-        database: 'connected',
-        redis: {
-          status: redisStatus,
-          error: redisError
-        },
-        timestamp: new Date().toISOString()
-      });
-    });
     
     // Start the server
     const PORT = process.env.PORT || 3000;
