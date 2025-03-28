@@ -26,23 +26,13 @@ async function setupDatabase() {
     const seedSQL = fs.readFileSync(seedPath, 'utf8');
     
     console.log('Executing schema SQL...');
-    // Split the schema SQL into individual statements
-    const schemaStatements = schemaSQL.split(';').filter(stmt => stmt.trim());
-    for (const stmt of schemaStatements) {
-      if (stmt.trim()) {
-        await db.result(stmt);
-      }
-    }
+    // Execute the entire schema SQL as one statement
+    await db.none(schemaSQL);
     console.log('Schema SQL executed successfully');
     
     console.log('Executing seed SQL...');
-    // Split the seed SQL into individual statements
-    const seedStatements = seedSQL.split(';').filter(stmt => stmt.trim());
-    for (const stmt of seedStatements) {
-      if (stmt.trim()) {
-        await db.result(stmt);
-      }
-    }
+    // Execute the entire seed SQL as one statement
+    await db.none(seedSQL);
     console.log('Seed SQL executed successfully');
     
     console.log('Database setup completed successfully');
