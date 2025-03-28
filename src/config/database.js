@@ -72,11 +72,24 @@ const runMigrations = async () => {
 
     for (const migration of migrations) {
       if (!executedMigrationNames.includes(migration.name)) {
-        await db.tx(async (t) => {
-          await migration.up(t);
-          await t.none('INSERT INTO migrations (name) VALUES ($1)', [migration.name]);
-        });
-        console.log(`Migration ${migration.name} executed successfully`);
+        try {
+          await db.tx(async (t) => {
+            await migration.up(t);
+            await t.none('INSERT INTO migrations (name) VALUES ($1)', [migration.name]);
+          });
+          console.log(`Migration ${migration.name} executed successfully`);
+        } catch (error) {
+          // If the error is about table already existing, we can ignore it
+          if (error.code === '42P07') {
+            console.log(`Table already exists for migration ${migration.name}, skipping...`);
+            // Still mark the migration as executed
+            await db.none('INSERT INTO migrations (name) VALUES ($1)', [migration.name]);
+            continue;
+          }
+          throw error;
+        }
+      } else {
+        console.log(`Migration ${migration.name} already executed, skipping...`);
       }
     }
   } catch (error) {
