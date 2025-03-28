@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Locator</title>
+    <title>Event Locator - API Documentation</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
     <style>
         .hero-section {
-            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)), url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
+            background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80');
             background-size: cover;
             background-position: center;
             height: 60vh;
@@ -30,6 +30,26 @@
         .event-card:hover {
             transform: translateY(-5px);
         }
+        .api-endpoint {
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 10px;
+            font-family: monospace;
+        }
+        .method {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 3px;
+            margin-right: 8px;
+        }
+        .get { background-color: #28a745; color: white; }
+        .post { background-color: #007bff; color: white; }
+        .put { background-color: #ffc107; color: black; }
+        .delete { background-color: #dc3545; color: white; }
+        .endpoint-section {
+            margin-bottom: 30px;
+        }
     </style>
 </head>
 <body>
@@ -43,16 +63,16 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="#events">Events</a>
+                        <a class="nav-link" href="#api-docs">API Docs</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#categories">Categories</a>
+                        <a class="nav-link" href="#endpoints">Endpoints</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#about">About</a>
+                        <a class="nav-link" href="https://event-locator-app.onrender.com/api-docs" target="_blank">Swagger UI</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="#contact">Contact</a>
+                        <a class="nav-link" href="https://event-locator-app.onrender.com/health" target="_blank">Health Check</a>
                     </li>
                 </ul>
             </div>
@@ -62,43 +82,35 @@
     <!-- Hero Section -->
     <section class="hero-section">
         <div class="container text-center">
-            <h1 class="display-4">Discover Amazing Events Near You</h1>
-            <p class="lead">Find and join the best local events, meet new people, and create unforgettable memories.</p>
+            <h1 class="display-4">Event Locator API</h1>
+            <p class="lead">Discover and interact with our comprehensive event management system</p>
             <div class="mt-4">
-                <input type="text" class="form-control form-control-lg w-75 mx-auto" placeholder="Search for events...">
+                <a href="https://event-locator-app.onrender.com/api-docs" class="btn btn-primary btn-lg me-2">View Swagger Documentation</a>
+                <a href="#endpoints" class="btn btn-outline-light btn-lg">Explore Endpoints</a>
             </div>
         </div>
     </section>
 
-    <!-- Features Section -->
-    <section class="py-5">
+    <!-- API Documentation Section -->
+    <section class="py-5" id="api-docs">
         <div class="container">
-            <h2 class="text-center mb-5">Why Choose Event Locator?</h2>
+            <h2 class="text-center mb-5">API Documentation</h2>
             <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center">
-                            <i class="bi bi-geo-alt-fill display-4 text-primary mb-3"></i>
-                            <h5 class="card-title">Local Events</h5>
-                            <p class="card-text">Find events happening right in your neighborhood.</p>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Interactive Documentation</h5>
+                            <p class="card-text">Explore our API using Swagger UI for interactive documentation and testing.</p>
+                            <a href="https://event-locator-app.onrender.com/api-docs" class="btn btn-primary" target="_blank">Open Swagger UI</a>
                         </div>
                     </div>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center">
-                            <i class="bi bi-calendar-check display-4 text-primary mb-3"></i>
-                            <h5 class="card-title">Easy Booking</h5>
-                            <p class="card-text">Simple and quick event registration process.</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card feature-card h-100">
-                        <div class="card-body text-center">
-                            <i class="bi bi-people-fill display-4 text-primary mb-3"></i>
-                            <h5 class="card-title">Community</h5>
-                            <p class="card-text">Connect with like-minded people in your area.</p>
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">Health Check</h5>
+                            <p class="card-text">Monitor the health status of our API and services.</p>
+                            <a href="https://event-locator-app.onrender.com/health" class="btn btn-success" target="_blank">Check Health Status</a>
                         </div>
                     </div>
                 </div>
@@ -106,40 +118,143 @@
         </div>
     </section>
 
-    <!-- Popular Events Section -->
-    <section class="py-5 bg-light" id="events">
+    <!-- API Endpoints Section -->
+    <section class="py-5 bg-light" id="endpoints">
         <div class="container">
-            <h2 class="text-center mb-5">Popular Events</h2>
-            <div class="row">
-                <div class="col-md-4 mb-4">
-                    <div class="card event-card">
-                        <img src="https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top" alt="Event">
-                        <div class="card-body">
-                            <h5 class="card-title">Summer Music Festival</h5>
-                            <p class="card-text">Join us for an amazing day of live music and entertainment.</p>
-                            <a href="#" class="btn btn-primary">Learn More</a>
-                        </div>
-                    </div>
+            <h2 class="text-center mb-5">API Endpoints</h2>
+            
+            <!-- Authentication Endpoints -->
+            <div class="endpoint-section">
+                <h3 class="mb-4">Authentication</h3>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/register</code>
+                    <p class="mt-2 mb-0">Register a new user account</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card event-card">
-                        <img src="https://images.unsplash.com/photo-1511795409834-432f7d1f9b1f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top" alt="Event">
-                        <div class="card-body">
-                            <h5 class="card-title">Food & Wine Tasting</h5>
-                            <p class="card-text">Experience the finest local cuisine and wines.</p>
-                            <a href="#" class="btn btn-primary">Learn More</a>
-                        </div>
-                    </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/login</code>
+                    <p class="mt-2 mb-0">Login with email and password</p>
                 </div>
-                <div class="col-md-4 mb-4">
-                    <div class="card event-card">
-                        <img src="https://images.unsplash.com/photo-1511795409834-432f7d1f9b1f?ixlib=rb-1.2.1&auto=format&fit=crop&w=500&q=60" class="card-img-top" alt="Event">
-                        <div class="card-body">
-                            <h5 class="card-title">Tech Meetup</h5>
-                            <p class="card-text">Network with fellow tech enthusiasts.</p>
-                            <a href="#" class="btn btn-primary">Learn More</a>
-                        </div>
-                    </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/auth/logout</code>
+                    <p class="mt-2 mb-0">Logout the current user</p>
+                </div>
+            </div>
+
+            <!-- Users Endpoints -->
+            <div class="endpoint-section">
+                <h3 class="mb-4">Users</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/users</code>
+                    <p class="mt-2 mb-0">Get all users (admin only)</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/users/:id</code>
+                    <p class="mt-2 mb-0">Get user by ID</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method put">PUT</span>
+                    <code>/api/users/:id</code>
+                    <p class="mt-2 mb-0">Update user profile</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method delete">DELETE</span>
+                    <code>/api/users/:id</code>
+                    <p class="mt-2 mb-0">Delete user account</p>
+                </div>
+            </div>
+
+            <!-- Events Endpoints -->
+            <div class="endpoint-section">
+                <h3 class="mb-4">Events</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/events</code>
+                    <p class="mt-2 mb-0">Get all events</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/events/:id</code>
+                    <p class="mt-2 mb-0">Get event by ID</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/events</code>
+                    <p class="mt-2 mb-0">Create new event</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method put">PUT</span>
+                    <code>/api/events/:id</code>
+                    <p class="mt-2 mb-0">Update event</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method delete">DELETE</span>
+                    <code>/api/events/:id</code>
+                    <p class="mt-2 mb-0">Delete event</p>
+                </div>
+            </div>
+
+            <!-- Categories Endpoints -->
+            <div class="endpoint-section">
+                <h3 class="mb-4">Categories</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/categories</code>
+                    <p class="mt-2 mb-0">Get all categories</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/categories/:id</code>
+                    <p class="mt-2 mb-0">Get category by ID</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/categories</code>
+                    <p class="mt-2 mb-0">Create new category</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method put">PUT</span>
+                    <code>/api/categories/:id</code>
+                    <p class="mt-2 mb-0">Update category</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method delete">DELETE</span>
+                    <code>/api/categories/:id</code>
+                    <p class="mt-2 mb-0">Delete category</p>
+                </div>
+            </div>
+
+            <!-- Reviews Endpoints -->
+            <div class="endpoint-section">
+                <h3 class="mb-4">Reviews</h3>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/reviews</code>
+                    <p class="mt-2 mb-0">Get all reviews</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method get">GET</span>
+                    <code>/api/reviews/:id</code>
+                    <p class="mt-2 mb-0">Get review by ID</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method post">POST</span>
+                    <code>/api/reviews</code>
+                    <p class="mt-2 mb-0">Create new review</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method put">PUT</span>
+                    <code>/api/reviews/:id</code>
+                    <p class="mt-2 mb-0">Update review</p>
+                </div>
+                <div class="api-endpoint">
+                    <span class="method delete">DELETE</span>
+                    <code>/api/reviews/:id</code>
+                    <p class="mt-2 mb-0">Delete review</p>
                 </div>
             </div>
         </div>
@@ -150,29 +265,29 @@
         <div class="container">
             <div class="row">
                 <div class="col-md-4">
-                    <h5>Event Locator</h5>
-                    <p>Find and join amazing events in your area.</p>
+                    <h5>Event Locator API</h5>
+                    <p>Comprehensive event management system API</p>
                 </div>
                 <div class="col-md-4">
                     <h5>Quick Links</h5>
                     <ul class="list-unstyled">
-                        <li><a href="#" class="text-white">About Us</a></li>
-                        <li><a href="#" class="text-white">Contact</a></li>
-                        <li><a href="#" class="text-white">Terms & Conditions</a></li>
+                        <li><a href="https://event-locator-app.onrender.com/api-docs" class="text-white" target="_blank">API Documentation</a></li>
+                        <li><a href="https://event-locator-app.onrender.com/health" class="text-white" target="_blank">Health Check</a></li>
+                        <li><a href="#endpoints" class="text-white">Available Endpoints</a></li>
                     </ul>
                 </div>
                 <div class="col-md-4">
-                    <h5>Connect With Us</h5>
-                    <div class="social-links">
-                        <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
-                        <a href="#" class="text-white me-3"><i class="bi bi-twitter"></i></a>
-                        <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
-                    </div>
+                    <h5>Resources</h5>
+                    <ul class="list-unstyled">
+                        <li><a href="https://github.com/yourusername/event-locator-app" class="text-white" target="_blank">GitHub Repository</a></li>
+                        <li><a href="#" class="text-white">API Status</a></li>
+                        <li><a href="#" class="text-white">Support</a></li>
+                    </ul>
                 </div>
             </div>
             <hr>
             <div class="text-center">
-                <p class="mb-0">&copy; 2024 Event Locator. All rights reserved.</p>
+                <p class="mb-0">&copy; 2024 Event Locator API. All rights reserved.</p>
             </div>
         </div>
     </footer>
