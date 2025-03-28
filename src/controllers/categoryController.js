@@ -1,4 +1,4 @@
-const { db } = require('../config/database');
+const db = require('../config/database');
 const { validationResult } = require('express-validator');
 const { NotFoundError } = require('../utils/errors');
 
@@ -15,6 +15,7 @@ const getCategories = async (req, res, next) => {
 
     res.json({ categories });
   } catch (error) {
+    console.error('Error in getCategories:', error);
     next(error);
   }
 };

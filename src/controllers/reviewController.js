@@ -1,4 +1,4 @@
-const { db } = require('../config/database');
+const db = require('../config/database');
 const { validationResult } = require('express-validator');
 const { NotFoundError, ForbiddenError } = require('../utils/errors');
 
@@ -24,6 +24,7 @@ const getEventReviews = async (req, res, next) => {
       averageRating: Number(avgRating.toFixed(1))
     });
   } catch (error) {
+    console.error('Error in getEventReviews:', error);
     next(error);
   }
 };
