@@ -15,6 +15,7 @@ const specs = require('./config/swagger');
 const setupDatabase = require('./db/setup');
 const helmet = require('helmet');
 const compression = require('compression');
+const path = require('path');
 
 const app = express();
 
@@ -42,7 +43,10 @@ i18next
   });
 app.use(i18nextMiddleware.handle(i18next));
 
-// Routes
+// Serve static files from the public directory
+app.use(express.static(path.join(__dirname, '../public')));
+
+// API Routes
 app.use('/api/auth', require('./routes/auth'));
 app.use('/api/users', require('./routes/users'));
 app.use('/api/events', require('./routes/events'));
@@ -51,6 +55,16 @@ app.use('/api/reviews', reviewRoutes);
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
+
+// Root route handler
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
+
+// Catch-all route for SPA
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // Error handling
 app.use((err, req, res, next) => {
