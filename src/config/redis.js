@@ -4,11 +4,13 @@ require('dotenv').config();
 let redisClient = null;
 let connectionAttempts = 0;
 const MAX_CONNECTION_ATTEMPTS = 5;
+let isConnecting = false;
 
 const setupRedis = async () => {
   try {
-    if (redisClient) {
-      console.log('Redis client already exists');
+    // If already connecting or connected, return existing client
+    if (isConnecting || redisClient) {
+      console.log('Redis connection already in progress or client exists');
       return redisClient;
     }
 
@@ -42,6 +44,9 @@ const setupRedis = async () => {
       return null;
     }
 
+    isConnecting = true;
+    connectionAttempts = 0;
+
     redisClient = new Redis(formattedUrl, {
       tls: {
         rejectUnauthorized: false
@@ -50,6 +55,7 @@ const setupRedis = async () => {
         connectionAttempts++;
         if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
           console.log('Max Redis connection attempts reached, giving up');
+          isConnecting = false;
           return null; // Stop retrying
         }
         const delay = Math.min(times * 100, 1000);
@@ -64,9 +70,10 @@ const setupRedis = async () => {
       db: 0,
       lazyConnect: true,
       showFriendlyErrorStack: true,
-      enableOfflineQueue: false, // Disable offline queue to prevent hanging
+      enableOfflineQueue: false,
       reconnectOnError: (err) => {
         if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
+          isConnecting = false;
           return false; // Stop reconnecting
         }
         const targetError = 'READONLY';
@@ -80,7 +87,8 @@ const setupRedis = async () => {
     // Set up event handlers
     redisClient.on('connect', () => {
       console.log('Redis Client Connected');
-      connectionAttempts = 0; // Reset connection attempts on successful connection
+      connectionAttempts = 0;
+      isConnecting = false;
     });
 
     redisClient.on('error', (err) => {
@@ -100,10 +108,12 @@ const setupRedis = async () => {
 
     redisClient.on('close', () => {
       console.log('Redis Client Connection Closed');
+      isConnecting = false;
     });
 
     redisClient.on('end', () => {
       console.log('Redis Client Connection Ended');
+      isConnecting = false;
     });
 
     // Test the connection with a timeout
@@ -125,10 +135,12 @@ const setupRedis = async () => {
           console.error('Error while closing Redis connection:', quitError.message);
         }
       }
+      isConnecting = false;
       return null;
     }
   } catch (error) {
     console.error('Redis setup failed:', error.message);
+    isConnecting = false;
     return null;
   }
 };
