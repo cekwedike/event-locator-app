@@ -1,4 +1,4 @@
-const { db } = require('../config/database');
+const db = require('../config/database');
 const { validationResult } = require('express-validator');
 const { NotFoundError, ValidationError } = require('../utils/errors');
 
