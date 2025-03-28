@@ -34,8 +34,13 @@ const setupDatabase = async () => {
     console.log('Database connection successful');
 
     // Enable PostGIS extension if not already enabled
-    await db.none('CREATE EXTENSION IF NOT EXISTS postgis');
-    console.log('PostGIS extension enabled');
+    try {
+      await db.none('CREATE EXTENSION IF NOT EXISTS postgis');
+      console.log('PostGIS extension enabled');
+    } catch (error) {
+      console.error('Failed to enable PostGIS extension:', error);
+      // Continue even if PostGIS fails - we'll handle it in the migrations
+    }
 
     // Run migrations
     await runMigrations();
