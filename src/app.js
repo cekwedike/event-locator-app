@@ -120,8 +120,8 @@ const startServer = async () => {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       console.log(`Server is running on port ${PORT}`);
-      console.log(`API Documentation available at http://localhost:${PORT}/api-docs`);
-      console.log(`Health check available at http://localhost:${PORT}/health`);
+      console.log(`API Documentation available at https://event-locator-app.onrender.com/api-docs`);
+      console.log(`Health check available at https://event-locator-app.onrender.com/health`);
       if (redisStatus !== 'connected') {
         console.log('Note: Redis is not connected. Some features may be limited.');
       }
