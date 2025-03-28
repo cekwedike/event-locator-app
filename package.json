@@ -15,7 +15,8 @@
     "db:migrate:down": "node-pg-migrate down",
     "db:seed": "psql -d event_locator -f src/db/seed.sql",
     "db:reset": "psql -d event_locator -f src/db/schema.sql && npm run db:seed",
-    "setup": "node src/db/setup.js"
+    "setup": "node src/db/setup.js",
+    "create-superuser": "node src/scripts/createSuperUser.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
