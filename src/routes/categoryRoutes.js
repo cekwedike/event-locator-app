@@ -57,6 +57,22 @@ const {
  *                   type: array
  *                   items:
  *                     $ref: '#/components/schemas/Category'
+ *             example:
+ *               categories:
+ *                 - id: 1
+ *                   name: "Music"
+ *                   description: "Music events and concerts"
+ *                   event_count: 5
+ *                   created_at: "2024-03-28T10:11:00.432Z"
+ *                   updated_at: "2024-03-28T10:11:00.432Z"
+ *                 - id: 2
+ *                   name: "Sports"
+ *                   description: "Sports events and tournaments"
+ *                   event_count: 3
+ *                   created_at: "2024-03-28T10:12:00.432Z"
+ *                   updated_at: "2024-03-28T10:12:00.432Z"
+ *       500:
+ *         description: Server error
  */
 router.get('/', getCategories);
 

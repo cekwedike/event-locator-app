@@ -8,7 +8,7 @@ const options = {
       version: '1.0.0',
       description: 'API documentation for the Event Locator application',
       contact: {
-        name: 'API Support',
+        name: 'Chidiebere Ekwedike',
         email: 'support@eventlocator.com'
       }
     },
@@ -18,7 +18,7 @@ const options = {
         description: 'Development server'
       },
       {
-        url: 'https://api.eventlocator.com',
+        url: 'https://event-locator-app.onrender.com',
         description: 'Production server'
       }
     ],
