@@ -33,6 +33,7 @@ app.use(compression());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
+setupPassport(); // Initialize Passport strategies
 
 // Setup i18n
 i18next
