@@ -114,39 +114,48 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
--- Create triggers for updated_at
-CREATE TRIGGER update_users_updated_at
-  BEFORE UPDATE ON users
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_categories_updated_at
-  BEFORE UPDATE ON categories
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_events_updated_at
-  BEFORE UPDATE ON events
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_reviews_updated_at
-  BEFORE UPDATE ON reviews
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_user_preferences_updated_at
-  BEFORE UPDATE ON user_preferences
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+-- Create triggers for updated_at (with IF NOT EXISTS)
+DO $$ 
+BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_users_updated_at') THEN
+    CREATE TRIGGER update_users_updated_at
+      BEFORE UPDATE ON users
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_categories_updated_at') THEN
+    CREATE TRIGGER update_categories_updated_at
+      BEFORE UPDATE ON categories
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_events_updated_at') THEN
+    CREATE TRIGGER update_events_updated_at
+      BEFORE UPDATE ON events
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_reviews_updated_at') THEN
+    CREATE TRIGGER update_reviews_updated_at
+      BEFORE UPDATE ON reviews
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM pg_trigger WHERE tgname = 'update_user_preferences_updated_at') THEN
+    CREATE TRIGGER update_user_preferences_updated_at
+      BEFORE UPDATE ON user_preferences
+      FOR EACH ROW
+      EXECUTE FUNCTION update_updated_at_column();
+  END IF;
+END $$;
 
 -- Add indexes (with IF NOT EXISTS)
 DO $$ 
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_users_username') THEN
-    CREATE INDEX idx_users_username ON users(username);
-  END IF;
-  
   IF NOT EXISTS (SELECT 1 FROM pg_indexes WHERE indexname = 'idx_events_start_date') THEN
     CREATE INDEX idx_events_start_date ON events(start_date);
   END IF;
