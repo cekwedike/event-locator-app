@@ -10,6 +10,7 @@ const { setupI18n } = require('./config/i18n');
 const { setupPassport } = require('./config/passport');
 const categoryRoutes = require('./routes/categoryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
+const authRoutes = require('./routes/auth');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
 const setupDatabase = require('./db/setup');
@@ -52,7 +53,7 @@ i18next
 app.use(i18nextMiddleware.handle(i18next));
 
 // API Routes (must come before static file serving)
-app.use('/api/auth', require('./routes/auth'));
+app.use('/api/auth', authRoutes);
 app.use('/api/users', require('./routes/users'));
 app.use('/api/events', require('./routes/events'));
 app.use('/api/categories', categoryRoutes);
