@@ -12,7 +12,7 @@ const categoryRoutes = require('./routes/categoryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
-const setupDatabase = require('./db/setup');
+const { setupDatabase } = require('./config/database');
 const helmet = require('helmet');
 const compression = require('compression');
 const path = require('path');
@@ -22,7 +22,9 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: ['http://localhost:3000', 'https://event-locator-app.onrender.com'],
+  origin: process.env.NODE_ENV === 'development' 
+    ? '*' 
+    : ['http://localhost:3000', 'https://event-locator-app.onrender.com'],
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true

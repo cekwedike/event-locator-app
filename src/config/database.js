@@ -85,4 +85,7 @@ const runMigrations = async () => {
   }
 };
 
-module.exports = db; 
+module.exports = {
+  db,
+  setupDatabase
+}; 
