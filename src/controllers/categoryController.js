@@ -5,6 +5,7 @@ const { NotFoundError } = require('../utils/errors');
 // Get all categories
 const getCategories = async (req, res, next) => {
   try {
+    console.log('Fetching all categories...');
     const categories = await db.any(
       `SELECT c.*, COUNT(DISTINCT ec.event_id) as event_count
        FROM categories c
@@ -12,10 +13,16 @@ const getCategories = async (req, res, next) => {
        GROUP BY c.id
        ORDER BY c.name ASC`
     );
-
+    console.log(`Successfully fetched ${categories.length} categories`);
     res.json({ categories });
   } catch (error) {
     console.error('Error in getCategories:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      query: error.query,
+      params: error.params
+    });
     next(error);
   }
 };
@@ -23,6 +30,7 @@ const getCategories = async (req, res, next) => {
 // Get category by ID
 const getCategory = async (req, res, next) => {
   try {
+    console.log(`Fetching category with ID: ${req.params.id}`);
     const category = await db.oneOrNone(
       `SELECT c.*, 
               COUNT(DISTINCT ec.event_id) as event_count,
@@ -37,11 +45,20 @@ const getCategory = async (req, res, next) => {
     );
 
     if (!category) {
+      console.log(`Category not found with ID: ${req.params.id}`);
       throw new NotFoundError('Category not found');
     }
 
+    console.log(`Successfully fetched category: ${category.name}`);
     res.json({ category });
   } catch (error) {
+    console.error('Error in getCategory:', error);
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      query: error.query,
+      params: error.params
+    });
     next(error);
   }
 };
