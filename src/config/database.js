@@ -1,19 +1,20 @@
 const pgp = require('pg-promise')();
 require('dotenv').config();
 
-// Get database URL from environment
-const DATABASE_URL = process.env.DATABASE_URL;
+// Get database URL from environment or construct it from individual parameters
+const DATABASE_URL = process.env.DATABASE_URL || 
+  `postgresql://${process.env.DB_USER}:${process.env.DB_PASSWORD}@${process.env.DB_HOST}:${process.env.DB_PORT}/${process.env.DB_NAME}`;
 
 if (!DATABASE_URL) {
-  throw new Error('DATABASE_URL environment variable is not set');
+  throw new Error('Database configuration is not set. Please provide either DATABASE_URL or individual DB parameters.');
 }
 
 // Configure pg-promise with the database URL and SSL
 const db = pgp({
   connectionString: DATABASE_URL,
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false // Required for Render's PostgreSQL
-  }
+  } : false
 });
 
 // Test the connection
