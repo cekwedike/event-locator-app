@@ -2,6 +2,8 @@ const Redis = require('ioredis');
 require('dotenv').config();
 
 let redisClient = null;
+let connectionAttempts = 0;
+const MAX_CONNECTION_ATTEMPTS = 5;
 
 const setupRedis = async () => {
   try {
@@ -45,20 +47,28 @@ const setupRedis = async () => {
         rejectUnauthorized: false
       },
       retryStrategy: (times) => {
-        const delay = Math.min(times * 100, 3000);
-        console.log(`Retrying Redis connection in ${delay}ms (attempt ${times})`);
+        connectionAttempts++;
+        if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
+          console.log('Max Redis connection attempts reached, giving up');
+          return null; // Stop retrying
+        }
+        const delay = Math.min(times * 100, 1000);
+        console.log(`Retrying Redis connection in ${delay}ms (attempt ${connectionAttempts}/${MAX_CONNECTION_ATTEMPTS})`);
         return delay;
       },
-      maxRetriesPerRequest: 5,
-      connectTimeout: 20000,
-      commandTimeout: 10000,
+      maxRetriesPerRequest: 3,
+      connectTimeout: 10000,
+      commandTimeout: 5000,
       keepAlive: 30000,
       family: 4,
       db: 0,
       lazyConnect: true,
       showFriendlyErrorStack: true,
-      enableOfflineQueue: true, // Enable offline queue to handle reconnection
+      enableOfflineQueue: false, // Disable offline queue to prevent hanging
       reconnectOnError: (err) => {
+        if (connectionAttempts >= MAX_CONNECTION_ATTEMPTS) {
+          return false; // Stop reconnecting
+        }
         const targetError = 'READONLY';
         if (err.message.includes(targetError)) {
           return true;
@@ -70,6 +80,7 @@ const setupRedis = async () => {
     // Set up event handlers
     redisClient.on('connect', () => {
       console.log('Redis Client Connected');
+      connectionAttempts = 0; // Reset connection attempts on successful connection
     });
 
     redisClient.on('error', (err) => {
@@ -99,7 +110,7 @@ const setupRedis = async () => {
     try {
       const pingPromise = redisClient.ping();
       const timeoutPromise = new Promise((_, reject) => {
-        setTimeout(() => reject(new Error('Redis ping timeout')), 10000);
+        setTimeout(() => reject(new Error('Redis ping timeout')), 5000);
       });
 
       await Promise.race([pingPromise, timeoutPromise]);
