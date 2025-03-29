@@ -7,7 +7,7 @@
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
     "build": "npm install --production=false",
-    "test": "NODE_ENV=test npx mocha 'src/tests/**/*.test.js' --timeout 10000 --exit",
+    "test": "NODE_ENV=test npm install --production=false && npx mocha 'src/tests/**/*.test.js' --timeout 10000 --exit",
     "test:watch": "NODE_ENV=test npx mocha 'src/tests/**/*.test.js' --watch",
     "test:coverage": "NODE_ENV=test nyc --reporter=text --reporter=lcov npm test",
     "test:ci": "NODE_ENV=test nyc --reporter=text --reporter=lcov --reporter=cobertura npm test",
