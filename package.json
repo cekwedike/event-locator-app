@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "build": "npm install --include=dev",
+    "build": "npm install --production=false",
     "test": "NODE_ENV=test npx mocha 'src/tests/**/*.test.js' --timeout 10000 --exit",
     "test:watch": "NODE_ENV=test npx mocha 'src/tests/**/*.test.js' --watch",
     "test:coverage": "NODE_ENV=test nyc --reporter=text --reporter=lcov npm test",
