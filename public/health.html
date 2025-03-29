@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Locator - Health Status</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .status-card {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .status-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .status-item:last-child {
+            border-bottom: none;
+        }
+        .status-label {
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .status-value {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+        .status-ok {
+            background-color: #d4edda;
+            color: #155724;
+        }
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+        .status-disabled {
+            background-color: #e9ecef;
+            color: #495057;
+        }
+        .timestamp {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9em;
+            margin-top: 20px;
+        }
+        .refresh-btn {
+            display: block;
+            margin: 20px auto;
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            transition: background-color 0.3s;
+        }
+        .refresh-btn:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Event Locator Health Status</h1>
+        <div class="status-card">
+            <div class="status-item">
+                <span class="status-label">Overall Status</span>
+                <span class="status-value" id="overall-status">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Database</span>
+                <span class="status-value" id="database-status">Loading...</span>
+            </div>
+            <div class="status-item">
+                <span class="status-label">Redis</span>
+                <span class="status-value" id="redis-status">Loading...</span>
+            </div>
+        </div>
+        <div class="timestamp" id="timestamp">Last updated: Loading...</div>
+        <button class="refresh-btn" onclick="checkHealth()">Refresh Status</button>
+    </div>
+
+    <script>
+        function checkHealth() {
+            fetch('/health/api')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById('overall-status').textContent = data.status;
+                    document.getElementById('overall-status').className = `status-value status-${data.status === 'ok' ? 'ok' : 'error'}`;
+                    
+                    document.getElementById('database-status').textContent = data.database;
+                    document.getElementById('database-status').className = `status-value status-${data.database === 'connected' ? 'ok' : 'error'}`;
+                    
+                    document.getElementById('redis-status').textContent = data.redis.status;
+                    document.getElementById('redis-status').className = `status-value status-${data.redis.status}`;
+                    
+                    document.getElementById('timestamp').textContent = `Last updated: ${new Date(data.timestamp).toLocaleString()}`;
+                })
+                .catch(error => {
+                    document.getElementById('overall-status').textContent = 'error';
+                    document.getElementById('overall-status').className = 'status-value status-error';
+                    document.getElementById('timestamp').textContent = `Error: ${error.message}`;
+                });
+        }
+
+        // Check health immediately when page loads
+        checkHealth();
+    </script>
+</body>
+</html> 

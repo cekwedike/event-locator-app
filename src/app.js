@@ -38,7 +38,10 @@ app.use(passport.initialize());
 setupPassport(); // Initialize Passport strategies
 
 // Health check route (no auth required)
-app.use('/health', healthRoutes);
+app.get('/health', (req, res) => {
+  res.sendFile(path.join(__dirname, '../public/health.html'));
+});
+app.use('/health/api', healthRoutes);
 
 // Setup i18n
 i18next
