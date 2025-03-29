@@ -26,14 +26,15 @@ const createTestUser = async () => {
     password: 'Test123!',
     first_name: 'Test',
     last_name: 'User',
+    role: 'user',
     location: { type: 'Point', coordinates: [0, 0] }
   };
   
   const result = await db.one(
-    `INSERT INTO users (email, password_hash, first_name, last_name, location)
-     VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326))
+    `INSERT INTO users (email, password, first_name, last_name, role, location)
+     VALUES ($1, $2, $3, $4, $5, ST_SetSRID(ST_MakePoint($6, $7), 4326))
      RETURNING id, email, first_name, last_name`,
-    [user.email, user.password, user.first_name, user.last_name, user.location.coordinates[0], user.location.coordinates[1]]
+    [user.email, user.password, user.first_name, user.last_name, user.role, user.location.coordinates[0], user.location.coordinates[1]]
   );
   
   return { ...user, id: result.id };
@@ -46,18 +47,17 @@ const createTestEvent = async (userId) => {
     start_date: new Date(Date.now() + 86400000), // Tomorrow
     end_date: new Date(Date.now() + 172800000), // Day after tomorrow
     location: { type: 'Point', coordinates: [0, 0] },
-    max_participants: 100,
-    price: 0,
+    status: 'active',
     organizer_id: userId
   };
   
   const result = await db.one(
-    `INSERT INTO events (title, description, start_date, end_date, location, max_participants, price, organizer_id)
-     VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8, $9)
+    `INSERT INTO events (title, description, start_date, end_date, location, status, organizer_id)
+     VALUES ($1, $2, $3, $4, ST_SetSRID(ST_MakePoint($5, $6), 4326), $7, $8)
      RETURNING id`,
     [event.title, event.description, event.start_date, event.end_date, 
      event.location.coordinates[0], event.location.coordinates[1],
-     event.max_participants, event.price, event.organizer_id]
+     event.status, event.organizer_id]
   );
   
   return { ...event, id: result.id };
