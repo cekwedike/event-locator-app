@@ -123,10 +123,8 @@
         document.addEventListener('DOMContentLoaded', function() {
             const links = document.getElementsByTagName('a');
             for (let link of links) {
-                if (!link.href.includes(window.location.hostname)) {
-                    link.target = '_blank';
-                    link.rel = 'noopener noreferrer';
-                }
+                link.target = '_blank';
+                link.rel = 'noopener noreferrer';
             }
         });
     </script>
