@@ -11,6 +11,7 @@ const { setupPassport } = require('./config/passport');
 const categoryRoutes = require('./routes/categoryRoutes');
 const reviewRoutes = require('./routes/reviewRoutes');
 const authRoutes = require('./routes/auth');
+const healthRoutes = require('./routes/health');
 const swaggerUi = require('swagger-ui-express');
 const specs = require('./config/swagger');
 const setupDatabase = require('./db/setup');
@@ -35,6 +36,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(passport.initialize());
 setupPassport(); // Initialize Passport strategies
+
+// Health check route (no auth required)
+app.use('/health', healthRoutes);
 
 // Setup i18n
 i18next
@@ -61,19 +65,6 @@ app.use('/api/reviews', reviewRoutes);
 
 // API Documentation
 app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.json({
-    status: 'ok',
-    database: 'connected',
-    redis: {
-      status: 'disabled', // Will be updated in startServer
-      error: null
-    },
-    timestamp: new Date().toISOString()
-  });
-});
 
 // Error handling for API routes
 app.use('/api/*', (err, req, res, next) => {
