@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest",
+    "test": "jest --detectOpenHandles",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "migrate": "node src/db/migrate.js"
@@ -19,8 +19,9 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
-    "setupFiles": [
-      "<rootDir>/src/tests/setup.js"
+    "globalSetup": "<rootDir>/src/tests/setup.js",
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/tests/setupAfterEnv.js"
     ]
   },
   "dependencies": {
