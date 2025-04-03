@@ -88,6 +88,19 @@ async function setupTestDatabase() {
         message TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
+
+      CREATE TABLE IF NOT EXISTS event_notifications (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id),
+        event_id INTEGER REFERENCES events(id),
+        type VARCHAR(50) NOT NULL,
+        title VARCHAR(255) NOT NULL,
+        start_time TIMESTAMP WITH TIME ZONE,
+        update_type VARCHAR(50),
+        language VARCHAR(10),
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id, event_id, type)
+      );
     `);
 
     // Create indexes
@@ -97,6 +110,8 @@ async function setupTestDatabase() {
       CREATE INDEX IF NOT EXISTS idx_events_category ON events(category_id);
       CREATE INDEX IF NOT EXISTS idx_events_start_time ON events(start_time);
       CREATE INDEX IF NOT EXISTS idx_events_created_by ON events(created_by);
+      CREATE INDEX IF NOT EXISTS idx_event_notifications_user ON event_notifications(user_id);
+      CREATE INDEX IF NOT EXISTS idx_event_notifications_event ON event_notifications(event_id);
     `);
   } catch (error) {
     console.error('Error setting up test database:', error);
@@ -108,6 +123,7 @@ async function cleanupTestDatabase() {
   try {
     // Drop all tables
     await pool.query(`
+      DROP TABLE IF EXISTS event_notifications CASCADE;
       DROP TABLE IF EXISTS notifications CASCADE;
       DROP TABLE IF EXISTS saved_events CASCADE;
       DROP TABLE IF EXISTS reviews CASCADE;

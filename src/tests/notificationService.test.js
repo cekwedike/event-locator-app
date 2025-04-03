@@ -22,7 +22,7 @@ describe('Notification Service Tests', () => {
 
       // Create test event
       const eventResult = await pool.query(
-        'INSERT INTO events (title, description, location, start_time, end_time, category_id, created_by) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6, $7, $8) RETURNING id',
+        'INSERT INTO events (title, description, location, start_time, end_time, category_id, created_by) VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6, $7, $8) RETURNING id, title',
         ['Test Event', 'Description', -73.935242, 40.730610, new Date(Date.now() + 3600000), new Date(Date.now() + 7200000), 1, testUser.id]
       );
       testEvent = eventResult.rows[0];
@@ -46,20 +46,21 @@ describe('Notification Service Tests', () => {
       await notificationService.checkUpcomingEvents();
 
       const { rows } = await pool.query(
-        'SELECT * FROM notifications WHERE user_id = $1 AND event_id = $2',
-        [testUser.id, testEvent.id]
+        'SELECT * FROM event_notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
+        [testUser.id, testEvent.id, 'upcoming_event']
       );
 
       expect(rows.length).toBeGreaterThan(0);
       expect(rows[0].type).toBe('upcoming_event');
+      expect(rows[0].title).toBe(testEvent.title);
     });
 
     it('should not create duplicate notifications', async () => {
       await notificationService.checkUpcomingEvents();
 
       const { rows } = await pool.query(
-        'SELECT * FROM notifications WHERE user_id = $1 AND event_id = $2',
-        [testUser.id, testEvent.id]
+        'SELECT * FROM event_notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
+        [testUser.id, testEvent.id, 'upcoming_event']
       );
 
       expect(rows.length).toBe(1);
@@ -78,12 +79,12 @@ describe('Notification Service Tests', () => {
       await notificationService.sendEventUpdateNotification(notification);
 
       const { rows } = await pool.query(
-        'SELECT * FROM notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
+        'SELECT * FROM event_notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
         [testUser.id, testEvent.id, 'event_update']
       );
 
       expect(rows.length).toBeGreaterThan(0);
-      expect(rows[0].message).toBe('Event has been updated');
+      expect(rows[0].title).toBe('Event has been updated');
     });
   });
 
@@ -99,12 +100,12 @@ describe('Notification Service Tests', () => {
       await notificationService.processNotification(notification);
 
       const { rows } = await pool.query(
-        'SELECT * FROM notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
+        'SELECT * FROM event_notifications WHERE user_id = $1 AND event_id = $2 AND type = $3',
         [testUser.id, testEvent.id, 'test_notification']
       );
 
       expect(rows.length).toBeGreaterThan(0);
-      expect(rows[0].message).toBe('Test notification message');
+      expect(rows[0].title).toBe('Test notification message');
     });
   });
 }); 
