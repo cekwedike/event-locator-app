@@ -14,6 +14,7 @@ const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const swaggerSpecs = require('./config/swagger');
+const runMigrations = require('./db/migrate');
 
 const app = express();
 
@@ -57,6 +58,7 @@ const startServer = async () => {
   try {
     // Required services
     await setupDatabase();
+    await runMigrations();
     await setupRedis();
     
     // Optional services

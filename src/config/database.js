@@ -2,26 +2,46 @@ const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 const pool = new Pool({
-  host: process.env.DB_HOST,
-  port: process.env.DB_PORT,
-  database: process.env.DB_NAME,
   user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
   password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-const setupDatabase = async () => {
+// Test the connection and PostGIS extension
+async function setupDatabase() {
+  const client = await pool.connect();
   try {
-    // Test the connection
-    await pool.query('SELECT NOW()');
-    logger.info('Database connected successfully');
+    // Test basic connection
+    await client.query('SELECT NOW()');
+    logger.info('Database connection successful');
 
-    // Create tables if they don't exist
-    await createTables();
+    // Check PostGIS extension
+    const { rows } = await client.query(
+      "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'postgis')"
+    );
+    
+    if (!rows[0].exists) {
+      logger.error('PostGIS extension is not installed. Please install PostGIS in your PostgreSQL database.');
+      throw new Error('PostGIS extension is required but not installed');
+    }
+    
+    logger.info('PostGIS extension is available');
   } catch (error) {
-    logger.error('Database connection error:', error);
+    logger.error('Database setup failed:', error);
     throw error;
+  } finally {
+    client.release();
   }
-};
+}
+
+// Handle pool errors
+pool.on('error', (err) => {
+  logger.error('Unexpected error on idle client', err);
+  process.exit(-1);
+});
 
 const createTables = async () => {
   const client = await pool.connect();
