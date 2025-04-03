@@ -1,3 +1,4 @@
+require('dotenv').config({ path: '.env.test' });
 const { createTestDatabase } = require('../db/createTestDb');
 const { pool } = require('../config/database');
 
@@ -5,14 +6,15 @@ const { pool } = require('../config/database');
 process.env.NODE_ENV = 'test';
 process.env.JWT_SECRET = 'test-secret-key';
 process.env.JWT_EXPIRES_IN = '1h';
-process.env.DB_NAME = 'event_locator_test';
-process.env.DB_PORT = '5433';
 
 // Initialize test database
 module.exports = async () => {
   try {
     // Create test database if it doesn't exist
     await createTestDatabase();
+
+    // Connect to test database
+    await pool.connect();
 
     // Enable PostGIS extension
     await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
@@ -116,6 +118,8 @@ module.exports = async () => {
       CREATE INDEX IF NOT EXISTS idx_event_notifications_user ON event_notifications(user_id);
       CREATE INDEX IF NOT EXISTS idx_event_notifications_event ON event_notifications(event_id);
     `);
+
+    console.log('Test database setup completed successfully');
   } catch (error) {
     console.error('Error setting up test database:', error);
     throw error;

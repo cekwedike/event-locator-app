@@ -1,5 +1,5 @@
 const jwt = require('jsonwebtoken');
-const db = require('../db');
+const { pool } = require('../config/database');
 const logger = require('../utils/logger');
 
 const authenticate = async (req, res, next) => {
@@ -12,7 +12,7 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const { rows } = await db.query(
+    const { rows } = await pool.query(
       'SELECT id, name, email, preferred_language, location FROM users WHERE id = $1',
       [decoded.id]
     );
@@ -48,7 +48,7 @@ const adminAuth = async (req, res, next) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
     // Get user from database
-    const { rows } = await db.query(
+    const { rows } = await pool.query(
       'SELECT id, email, name, role FROM users WHERE id = $1',
       [decoded.id]
     );

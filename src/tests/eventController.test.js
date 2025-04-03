@@ -3,7 +3,6 @@ const { pool } = require('../config/database');
 const app = require('../index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('Event Controller Tests', () => {
   let testUser;
@@ -12,17 +11,26 @@ describe('Event Controller Tests', () => {
 
   beforeAll(async () => {
     try {
-      // Setup test database
-      await setupTestDatabase();
-
       // Create test user
       const passwordHash = await bcrypt.hash('testpass123', 10);
       const result = await pool.query(
-        'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email',
-        ['test@example.com', passwordHash, 'Test User']
+        `INSERT INTO users (email, password_hash, name, location)
+         VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326))
+         RETURNING id, email`,
+        ['test@example.com', passwordHash, 'Test User', -73.935242, 40.730610]
       );
       testUser = result.rows[0];
       authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+
+      // Create test event
+      const eventResult = await pool.query(
+        `INSERT INTO events (title, description, location, start_time, end_time, category_id, created_by)
+         VALUES ($1, $2, ST_SetSRID(ST_MakePoint($3, $4), 4326), $5, $6, $7, $8)
+         RETURNING id`,
+        ['Test Event', 'Description', -73.935242, 40.730610, 
+         new Date(Date.now() + 86400000), new Date(Date.now() + 172800000), 1, testUser.id]
+      );
+      testEvent = eventResult.rows[0];
     } catch (error) {
       console.error('Error setting up test data:', error);
       throw error;
@@ -31,7 +39,11 @@ describe('Event Controller Tests', () => {
 
   afterAll(async () => {
     try {
-      await cleanupTestDatabase();
+      // Clean up test data
+      await pool.query('DELETE FROM reviews WHERE event_id = $1', [testEvent.id]);
+      await pool.query('DELETE FROM event_notifications WHERE event_id = $1', [testEvent.id]);
+      await pool.query('DELETE FROM events WHERE id = $1', [testEvent.id]);
+      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;
