@@ -2,36 +2,25 @@ const jwt = require('jsonwebtoken');
 const { pool } = require('../config/database');
 const logger = require('../utils/logger');
 
-const authenticate = async (req, res, next) => {
+const authenticate = (req, res, next) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'No token provided' });
+      return res.status(401).json({ error: 'No token provided' });
     }
 
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    const { rows } = await pool.query(
-      'SELECT id, name, email, preferred_language, location FROM users WHERE id = $1',
-      [decoded.id]
-    );
-
-    if (rows.length === 0) {
-      return res.status(401).json({ message: 'User not found' });
-    }
-
-    req.user = rows[0];
+    req.user = decoded;
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
-      return res.status(401).json({ message: 'Invalid token' });
+      return res.status(401).json({ error: 'Invalid token' });
     }
     if (error.name === 'TokenExpiredError') {
-      return res.status(401).json({ message: 'Token expired' });
+      return res.status(401).json({ error: 'Token expired' });
     }
-    console.error('Authentication error:', error);
-    res.status(500).json({ message: 'Internal server error' });
+    next(error);
   }
 };
 

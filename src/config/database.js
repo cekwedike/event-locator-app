@@ -3,12 +3,28 @@ const { Pool } = require('pg');
 const logger = require('../utils/logger');
 
 const pool = new Pool({
-  user: process.env.DB_USER,
   host: process.env.DB_HOST,
-  database: process.env.DB_NAME,
-  password: process.env.DB_PASSWORD,
   port: process.env.DB_PORT,
+  database: process.env.DB_NAME,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
 });
+
+// Test database connection
+const testConnection = async () => {
+  try {
+    const client = await pool.connect();
+    logger.info('Successfully connected to database');
+    client.release();
+  } catch (err) {
+    logger.error('Error connecting to the database:', err);
+    // Don't throw the error, just log it
+    // This allows the application to start even if the database is not available
+  }
+};
+
+// Call testConnection immediately
+testConnection();
 
 pool.on('connect', () => {
   console.log('Database connected successfully');
@@ -118,4 +134,5 @@ const createTables = async () => {
 module.exports = {
   pool,
   setupDatabase,
+  testConnection,
 }; 

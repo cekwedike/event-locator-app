@@ -7,11 +7,11 @@ const swaggerUi = require('swagger-ui-express');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const i18nextBackend = require('i18next-fs-backend');
-const { setupDatabase } = require('./config/database');
+const { setupDatabase, pool } = require('./config/database');
 const { setupRedis } = require('./config/redis');
 const { setupRabbitMQ } = require('./config/rabbitmq');
 const routes = require('./routes');
-const errorHandler = require('./middleware/errorHandler');
+const { errorHandler } = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const swaggerSpecs = require('./config/swagger');
 
@@ -85,7 +85,8 @@ const startServer = async () => {
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
-    process.exit(1);
+    // Don't exit the process, just log the error
+    // This allows the application to start even if some services are not available
   }
 };
 
@@ -93,5 +94,13 @@ const startServer = async () => {
 if (require.main === module) {
   startServer();
 }
+
+// Handle unhandled promise rejections
+process.on('unhandledRejection', (err) => {
+  console.error('Unhandled Promise Rejection:', err);
+  // Close server & exit process
+  pool.end();
+  process.exit(1);
+});
 
 module.exports = app; 

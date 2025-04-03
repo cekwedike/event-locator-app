@@ -1,36 +1,17 @@
 const amqp = require('amqplib');
 const logger = require('../utils/logger');
 
-let channel = null;
-let connection = null;
+let channel;
+let connection;
 
 const setupRabbitMQ = async () => {
-  if (process.env.NODE_ENV === 'development' && !process.env.FORCE_RABBITMQ) {
-    logger.info('Skipping RabbitMQ setup in development mode');
-    return;
-  }
-
   try {
-    const url = process.env.RABBITMQ_URL || 'amqp://localhost';
-    connection = await amqp.connect(url);
+    connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://localhost');
     channel = await connection.createChannel();
-
-    // Create queues
-    await channel.assertQueue('event_notifications', { durable: true });
-    await channel.assertQueue('event_updates', { durable: true });
-
-    // Handle connection errors
-    connection.on('error', (err) => {
-      logger.error('RabbitMQ connection error:', err);
-    });
-
-    connection.on('close', () => {
-      logger.info('RabbitMQ connection closed');
-    });
-
-    logger.info('RabbitMQ connected successfully');
+    logger.info('RabbitMQ setup completed');
   } catch (error) {
-    logger.warn('RabbitMQ connection error - continuing without message queue functionality:', error);
+    logger.error('RabbitMQ setup failed:', error);
+    throw error;
   }
 };
 
