@@ -11,7 +11,7 @@ const setupRabbitMQ = async () => {
   }
 
   try {
-    const url = `amqp://${process.env.RABBITMQ_USER}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`;
+    const url = process.env.RABBITMQ_URL || 'amqp://localhost';
     connection = await amqp.connect(url);
     channel = await connection.createChannel();
 
@@ -30,15 +30,14 @@ const setupRabbitMQ = async () => {
 
     logger.info('RabbitMQ connected successfully');
   } catch (error) {
-    logger.error('RabbitMQ connection error:', error);
-    throw error;
+    logger.warn('RabbitMQ connection error - continuing without message queue functionality:', error);
   }
 };
 
 // Message publishing helper
 const publishMessage = async (queue, message) => {
   if (!channel) {
-    logger.warn('RabbitMQ not connected - message not sent');
+    logger.debug('RabbitMQ not connected - message not sent');
     return;
   }
 
@@ -47,14 +46,13 @@ const publishMessage = async (queue, message) => {
     logger.info(`Message published to ${queue}`);
   } catch (error) {
     logger.error('Error publishing message:', error);
-    throw error;
   }
 };
 
 // Message consuming helper
 const consumeMessages = async (queue, callback) => {
   if (!channel) {
-    logger.warn('RabbitMQ not connected - message consumption not started');
+    logger.debug('RabbitMQ not connected - message consumption not started');
     return;
   }
 
@@ -69,7 +67,6 @@ const consumeMessages = async (queue, callback) => {
     logger.info(`Consuming messages from ${queue}`);
   } catch (error) {
     logger.error('Error consuming messages:', error);
-    throw error;
   }
 };
 

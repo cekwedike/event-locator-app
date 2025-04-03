@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const { authSchemas } = require('../middleware/validation');
 const {
@@ -60,7 +60,7 @@ router.post('/refresh', validate(authSchemas.refreshToken), refreshToken);
  *       401:
  *         description: Not authenticated
  */
-router.post('/logout', auth, logout);
+router.post('/logout', authenticate, logout);
 
 /**
  * @swagger
@@ -93,7 +93,7 @@ router.post('/logout', auth, logout);
  *       401:
  *         description: Not authenticated
  */
-router.post('/change-password', auth, validate(authSchemas.changePassword), changePassword);
+router.post('/change-password', authenticate, validate(authSchemas.changePassword), changePassword);
 
 /**
  * @swagger

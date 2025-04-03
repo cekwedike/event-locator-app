@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const { categorySchemas } = require('../middleware/validation');
 const {
@@ -91,7 +91,7 @@ router.get('/:id', getCategory);
  *       401:
  *         description: Not authenticated
  */
-router.post('/', auth, validate(categorySchemas.create), createCategory);
+router.post('/', authenticate, validate(categorySchemas.create), createCategory);
 
 /**
  * @swagger
@@ -131,7 +131,7 @@ router.post('/', auth, validate(categorySchemas.create), createCategory);
  *       404:
  *         description: Category not found
  */
-router.patch('/:id', auth, validate(categorySchemas.update), updateCategory);
+router.patch('/:id', authenticate, validate(categorySchemas.update), updateCategory);
 
 /**
  * @swagger
@@ -156,6 +156,6 @@ router.patch('/:id', auth, validate(categorySchemas.update), updateCategory);
  *       404:
  *         description: Category not found
  */
-router.delete('/:id', auth, deleteCategory);
+router.delete('/:id', authenticate, deleteCategory);
 
 module.exports = router; 

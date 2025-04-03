@@ -6,6 +6,11 @@ let pubClient;
 let subClient;
 
 const setupRedis = async () => {
+  if (process.env.NODE_ENV === 'development' && !process.env.FORCE_REDIS) {
+    logger.info('Skipping Redis setup in development mode');
+    return;
+  }
+
   try {
     // Create Redis client for caching
     redisClient = Redis.createClient({
@@ -34,13 +39,16 @@ const setupRedis = async () => {
 
     logger.info('Redis connected successfully');
   } catch (error) {
-    logger.error('Redis connection error:', error);
-    throw error;
+    logger.warn('Redis connection error - continuing without Redis:', error);
   }
 };
 
 // Cache helper functions
 const getCache = async (key) => {
+  if (!redisClient) {
+    return null;
+  }
+
   try {
     const data = await redisClient.get(key);
     return data ? JSON.parse(data) : null;
@@ -51,6 +59,10 @@ const getCache = async (key) => {
 };
 
 const setCache = async (key, value, expiration = 3600) => {
+  if (!redisClient) {
+    return;
+  }
+
   try {
     await redisClient.set(key, JSON.stringify(value), {
       EX: expiration,
@@ -61,6 +73,10 @@ const setCache = async (key, value, expiration = 3600) => {
 };
 
 const deleteCache = async (key) => {
+  if (!redisClient) {
+    return;
+  }
+
   try {
     await redisClient.del(key);
   } catch (error) {
@@ -70,6 +86,10 @@ const deleteCache = async (key) => {
 
 // Pub/Sub helper functions
 const publish = async (channel, message) => {
+  if (!pubClient) {
+    return;
+  }
+
   try {
     await pubClient.publish(channel, JSON.stringify(message));
   } catch (error) {
@@ -78,6 +98,10 @@ const publish = async (channel, message) => {
 };
 
 const subscribe = async (channel, callback) => {
+  if (!subClient) {
+    return;
+  }
+
   try {
     await subClient.subscribe(channel, (message) => {
       callback(JSON.parse(message));

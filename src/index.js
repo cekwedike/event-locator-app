@@ -6,7 +6,7 @@ const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
-const i18nextBackend = require('i18next-node-fs-backend');
+const i18nextBackend = require('i18next-fs-backend');
 const { setupDatabase } = require('./config/database');
 const { setupRedis } = require('./config/redis');
 const { setupRabbitMQ } = require('./config/rabbitmq');
@@ -14,7 +14,6 @@ const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
 const swaggerSpecs = require('./config/swagger');
-const runMigrations = require('./db/migrate');
 
 const app = express();
 
@@ -58,7 +57,6 @@ const startServer = async () => {
   try {
     // Required services
     await setupDatabase();
-    await runMigrations();
     await setupRedis();
     
     // Optional services

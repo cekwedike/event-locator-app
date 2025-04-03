@@ -10,25 +10,13 @@ const pool = new Pool({
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
 });
 
-// Test the connection and PostGIS extension
+// Test the connection
 async function setupDatabase() {
   const client = await pool.connect();
   try {
     // Test basic connection
     await client.query('SELECT NOW()');
     logger.info('Database connection successful');
-
-    // Check PostGIS extension
-    const { rows } = await client.query(
-      "SELECT EXISTS(SELECT 1 FROM pg_extension WHERE extname = 'postgis')"
-    );
-    
-    if (!rows[0].exists) {
-      logger.error('PostGIS extension is not installed. Please install PostGIS in your PostgreSQL database.');
-      throw new Error('PostGIS extension is required but not installed');
-    }
-    
-    logger.info('PostGIS extension is available');
   } catch (error) {
     logger.error('Database setup failed:', error);
     throw error;

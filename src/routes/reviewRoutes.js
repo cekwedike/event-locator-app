@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const { reviewSchemas } = require('../middleware/validation');
 const {
@@ -135,7 +135,7 @@ router.get('/:id', getReview);
  *       404:
  *         description: Event not found
  */
-router.post('/events/:eventId/reviews', auth, validate(reviewSchemas.create), createReview);
+router.post('/events/:eventId/reviews', authenticate, validate(reviewSchemas.create), createReview);
 
 /**
  * @swagger
@@ -177,7 +177,7 @@ router.post('/events/:eventId/reviews', auth, validate(reviewSchemas.create), cr
  *       404:
  *         description: Review not found
  */
-router.patch('/:id', auth, validate(reviewSchemas.update), updateReview);
+router.patch('/:id', authenticate, validate(reviewSchemas.update), updateReview);
 
 /**
  * @swagger
@@ -204,6 +204,6 @@ router.patch('/:id', auth, validate(reviewSchemas.update), updateReview);
  *       404:
  *         description: Review not found
  */
-router.delete('/:id', auth, deleteReview);
+router.delete('/:id', authenticate, deleteReview);
 
 module.exports = router; 

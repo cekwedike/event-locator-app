@@ -1,5 +1,5 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
 const { userSchemas } = require('../middleware/validation');
 const {
@@ -75,7 +75,7 @@ router.post('/register', validate(userSchemas.register), register);
 router.post('/login', validate(userSchemas.login), login);
 
 // Protected routes
-router.use(auth);
+router.use(authenticate);
 
 /**
  * @swagger
@@ -110,7 +110,10 @@ router.get('/profile', getProfile);
  *             properties:
  *               preferred_language:
  *                 type: string
- *                 enum: [en, es, fr]
+ *                 minLength: 2
+ *                 maxLength: 2
+ *               notification_preferences:
+ *                 type: object
  *     responses:
  *       200:
  *         description: Preferences updated successfully
