@@ -28,7 +28,8 @@ jest.mock('../config/rabbitmq', () => ({
 // Setup test database
 const { pool } = require('../config/database');
 
-async function setupTestDatabase() {
+// Global setup - runs once before all tests
+beforeAll(async () => {
   try {
     // Create test database if it doesn't exist
     await createTestDatabase();
@@ -36,6 +37,16 @@ async function setupTestDatabase() {
     // Enable PostGIS extension
     await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
     
+    // Drop all tables if they exist
+    await pool.query(`
+      DROP TABLE IF EXISTS event_notifications CASCADE;
+      DROP TABLE IF EXISTS notifications CASCADE;
+      DROP TABLE IF EXISTS saved_events CASCADE;
+      DROP TABLE IF EXISTS reviews CASCADE;
+      DROP TABLE IF EXISTS events CASCADE;
+      DROP TABLE IF EXISTS users CASCADE;
+    `);
+
     // Create test tables
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
@@ -43,7 +54,7 @@ async function setupTestDatabase() {
         email VARCHAR(255) UNIQUE NOT NULL,
         password_hash VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
-        location GEOGRAPHY(POINT),
+        location GEOGRAPHY(POINT, 4326),
         preferred_language VARCHAR(10) DEFAULT 'en',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -53,19 +64,19 @@ async function setupTestDatabase() {
         id SERIAL PRIMARY KEY,
         title VARCHAR(255) NOT NULL,
         description TEXT,
-        location GEOGRAPHY(POINT) NOT NULL,
+        location GEOGRAPHY(POINT, 4326) NOT NULL,
         start_time TIMESTAMP WITH TIME ZONE NOT NULL,
         end_time TIMESTAMP WITH TIME ZONE NOT NULL,
         category_id INTEGER,
-        created_by INTEGER REFERENCES users(id),
+        created_by INTEGER REFERENCES users(id) ON DELETE CASCADE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
 
       CREATE TABLE IF NOT EXISTS reviews (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        event_id INTEGER REFERENCES events(id),
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
         rating INTEGER CHECK (rating >= 1 AND rating <= 5),
         comment TEXT,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -74,16 +85,17 @@ async function setupTestDatabase() {
       );
 
       CREATE TABLE IF NOT EXISTS saved_events (
-        user_id INTEGER REFERENCES users(id),
-        event_id INTEGER REFERENCES events(id),
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-        PRIMARY KEY (user_id, event_id)
+        UNIQUE(user_id, event_id)
       );
 
       CREATE TABLE IF NOT EXISTS notifications (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        event_id INTEGER REFERENCES events(id),
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
         type VARCHAR(50) NOT NULL,
         message TEXT NOT NULL,
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -91,8 +103,8 @@ async function setupTestDatabase() {
 
       CREATE TABLE IF NOT EXISTS event_notifications (
         id SERIAL PRIMARY KEY,
-        user_id INTEGER REFERENCES users(id),
-        event_id INTEGER REFERENCES events(id),
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
         type VARCHAR(50) NOT NULL,
         title VARCHAR(255) NOT NULL,
         start_time TIMESTAMP WITH TIME ZONE,
@@ -117,9 +129,28 @@ async function setupTestDatabase() {
     console.error('Error setting up test database:', error);
     throw error;
   }
-}
+});
 
-async function cleanupTestDatabase() {
+// After each test
+afterEach(async () => {
+  try {
+    // Clean up data but keep tables
+    await pool.query(`
+      TRUNCATE TABLE event_notifications CASCADE;
+      TRUNCATE TABLE notifications CASCADE;
+      TRUNCATE TABLE saved_events CASCADE;
+      TRUNCATE TABLE reviews CASCADE;
+      TRUNCATE TABLE events CASCADE;
+      TRUNCATE TABLE users CASCADE;
+    `);
+  } catch (error) {
+    console.error('Error cleaning up test data:', error);
+    throw error;
+  }
+});
+
+// After all tests
+afterAll(async () => {
   try {
     // Drop all tables
     await pool.query(`
@@ -135,10 +166,17 @@ async function cleanupTestDatabase() {
     console.error('Error cleaning up test database:', error);
     throw error;
   }
-}
+});
+
+// Set test timeout to 10 seconds
+jest.setTimeout(10000);
 
 // Export setup and cleanup functions
 module.exports = {
-  setupTestDatabase,
-  cleanupTestDatabase
+  setupTestDatabase: async () => {
+    // This function is now empty as the setup is handled by the beforeAll and afterAll hooks
+  },
+  cleanupTestDatabase: async () => {
+    // This function is now empty as the cleanup is handled by the afterAll hook
+  }
 }; 

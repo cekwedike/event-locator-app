@@ -12,16 +12,16 @@ const authenticate = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const [user] = await db.query(
-      'SELECT id, name, email, preferred_language, notification_preferences FROM users WHERE id = ?',
+    const { rows } = await db.query(
+      'SELECT id, name, email, preferred_language, location FROM users WHERE id = $1',
       [decoded.id]
     );
 
-    if (!user) {
+    if (rows.length === 0) {
       return res.status(401).json({ message: 'User not found' });
     }
 
-    req.user = user;
+    req.user = rows[0];
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -49,7 +49,7 @@ const adminAuth = async (req, res, next) => {
 
     // Get user from database
     const { rows } = await db.query(
-      'SELECT id, email, name, role FROM users WHERE id = ?',
+      'SELECT id, email, name, role FROM users WHERE id = $1',
       [decoded.id]
     );
 

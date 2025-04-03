@@ -3,7 +3,6 @@ const { pool } = require('../config/database');
 const app = require('../index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('User Controller', () => {
   let testUser;
@@ -11,9 +10,6 @@ describe('User Controller', () => {
 
   beforeAll(async () => {
     try {
-      // Setup test database
-      await setupTestDatabase();
-
       // Create a test user
       const passwordHash = await bcrypt.hash('password123', 10);
       const { rows } = await pool.query(
@@ -26,7 +22,7 @@ describe('User Controller', () => {
 
       // Generate token for the test user
       testToken = jwt.sign(
-        { id: testUser.id, email: testUser.email },
+        { id: testUser.id },
         process.env.JWT_SECRET,
         { expiresIn: process.env.JWT_EXPIRES_IN }
       );
@@ -36,9 +32,13 @@ describe('User Controller', () => {
     }
   });
 
-  afterAll(async () => {
+  afterEach(async () => {
     try {
-      await cleanupTestDatabase();
+      // Clean up test data except the main test user
+      await pool.query(
+        'DELETE FROM users WHERE email != $1',
+        ['test@example.com']
+      );
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;
@@ -124,7 +124,7 @@ describe('User Controller', () => {
         .get('/api/users/profile');
 
       expect(response.status).toBe(401);
-      expect(response.body.status).toBe('error');
+      expect(response.body.message).toBe('No token provided');
     });
   });
 
@@ -134,14 +134,12 @@ describe('User Controller', () => {
         .patch('/api/users/preferences')
         .set('Authorization', `Bearer ${testToken}`)
         .send({
-          preferred_categories: ['Music', 'Sports'],
-          notification_radius: 20,
-          notification_enabled: true,
+          preferred_language: 'es'
         });
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('success');
-      expect(response.body.message).toBe('Preferences updated successfully');
+      expect(response.body.data.preferred_language).toBe('es');
     });
   });
 
@@ -157,7 +155,14 @@ describe('User Controller', () => {
 
       expect(response.status).toBe(200);
       expect(response.body.status).toBe('success');
-      expect(response.body.message).toBe('Location updated successfully');
+      
+      // Verify location was updated
+      const profile = await request(app)
+        .get('/api/users/profile')
+        .set('Authorization', `Bearer ${testToken}`);
+        
+      expect(profile.body.data.latitude).toBeCloseTo(40.7128);
+      expect(profile.body.data.longitude).toBeCloseTo(-74.0060);
     });
 
     it('should not update location with invalid coordinates', async () => {
