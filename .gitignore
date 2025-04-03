@@ -30,3 +30,4 @@ build/
 # Temporary files
 tmp/
 temp/ 
+.qodo

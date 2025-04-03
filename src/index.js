@@ -46,9 +46,17 @@ app.use(errorHandler);
 // Start server
 const startServer = async () => {
   try {
+    // Required services
     await setupDatabase();
     await setupRedis();
-    await setupRabbitMQ();
+    
+    // Optional services
+    try {
+      await setupRabbitMQ();
+      logger.info('RabbitMQ connected successfully');
+    } catch (error) {
+      logger.warn('RabbitMQ connection failed - continuing without message queue functionality');
+    }
     
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
