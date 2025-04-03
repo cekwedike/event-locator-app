@@ -1,6 +1,7 @@
 const { pool } = require('../config/database');
 const notificationService = require('../services/notificationService');
 const bcrypt = require('bcryptjs');
+const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('Notification Service Tests', () => {
   let testUser;
@@ -8,6 +9,9 @@ describe('Notification Service Tests', () => {
 
   beforeAll(async () => {
     try {
+      // Setup test database
+      await setupTestDatabase();
+
       // Create test user
       const passwordHash = await bcrypt.hash('testpass123', 10);
       const result = await pool.query(
@@ -30,10 +34,7 @@ describe('Notification Service Tests', () => {
 
   afterAll(async () => {
     try {
-      // Clean up test data
-      await pool.query('DELETE FROM notifications WHERE user_id = $1', [testUser.id]);
-      await pool.query('DELETE FROM events WHERE id = $1', [testEvent.id]);
-      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
+      await cleanupTestDatabase();
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;

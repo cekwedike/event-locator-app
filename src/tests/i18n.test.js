@@ -3,6 +3,7 @@ const app = require('../index');
 const { pool } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('Internationalization Tests', () => {
   let testUser;
@@ -10,6 +11,9 @@ describe('Internationalization Tests', () => {
 
   beforeAll(async () => {
     try {
+      // Setup test database
+      await setupTestDatabase();
+
       // Create test user
       const passwordHash = await bcrypt.hash('testpass123', 10);
       const result = await pool.query(
@@ -26,7 +30,7 @@ describe('Internationalization Tests', () => {
 
   afterAll(async () => {
     try {
-      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
+      await cleanupTestDatabase();
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;

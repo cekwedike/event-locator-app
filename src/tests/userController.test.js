@@ -3,34 +3,46 @@ const { pool } = require('../config/database');
 const app = require('../index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('User Controller', () => {
   let testUser;
   let testToken;
 
   beforeAll(async () => {
-    // Create a test user
-    const passwordHash = await bcrypt.hash('password123', 10);
-    const { rows } = await pool.query(
-      `INSERT INTO users (email, password_hash, name, preferred_language)
-       VALUES ($1, $2, $3, $4)
-       RETURNING id, email, name, preferred_language`,
-      ['test@example.com', passwordHash, 'Test User', 'en']
-    );
-    testUser = rows[0];
+    try {
+      // Setup test database
+      await setupTestDatabase();
 
-    // Generate token for the test user
-    testToken = jwt.sign(
-      { id: testUser.id, email: testUser.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
-    );
+      // Create a test user
+      const passwordHash = await bcrypt.hash('password123', 10);
+      const { rows } = await pool.query(
+        `INSERT INTO users (email, password_hash, name, preferred_language)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, email, name, preferred_language`,
+        ['test@example.com', passwordHash, 'Test User', 'en']
+      );
+      testUser = rows[0];
+
+      // Generate token for the test user
+      testToken = jwt.sign(
+        { id: testUser.id, email: testUser.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+      );
+    } catch (error) {
+      console.error('Error setting up test data:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await pool.query('DELETE FROM users WHERE email = $1', ['test@example.com']);
-    await pool.end();
+    try {
+      await cleanupTestDatabase();
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+      throw error;
+    }
   });
 
   describe('POST /api/users/register', () => {
@@ -49,9 +61,6 @@ describe('User Controller', () => {
       expect(response.body.data.user).toHaveProperty('id');
       expect(response.body.data.user.email).toBe('newuser@example.com');
       expect(response.body.data).toHaveProperty('token');
-
-      // Clean up
-      await pool.query('DELETE FROM users WHERE email = $1', ['newuser@example.com']);
     });
 
     it('should not register a user with existing email', async () => {

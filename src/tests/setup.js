@@ -27,7 +27,7 @@ jest.mock('../config/rabbitmq', () => ({
 // Setup test database
 const { pool } = require('../config/database');
 
-beforeAll(async () => {
+async function setupTestDatabase() {
   try {
     // Enable PostGIS extension
     await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
@@ -98,10 +98,9 @@ beforeAll(async () => {
     console.error('Error setting up test database:', error);
     throw error;
   }
-});
+}
 
-// Clean up after all tests
-afterAll(async () => {
+async function cleanupTestDatabase() {
   try {
     // Drop all tables
     await pool.query(`
@@ -116,7 +115,10 @@ afterAll(async () => {
     console.error('Error cleaning up test database:', error);
     throw error;
   }
-});
+}
 
-// Global test timeout
-jest.setTimeout(10000); 
+// Export setup and cleanup functions
+module.exports = {
+  setupTestDatabase,
+  cleanupTestDatabase
+}; 

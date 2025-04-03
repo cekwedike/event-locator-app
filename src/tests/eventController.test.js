@@ -3,6 +3,7 @@ const { pool } = require('../config/database');
 const app = require('../index');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('Event Controller Tests', () => {
   let testUser;
@@ -11,6 +12,9 @@ describe('Event Controller Tests', () => {
 
   beforeAll(async () => {
     try {
+      // Setup test database
+      await setupTestDatabase();
+
       // Create test user
       const passwordHash = await bcrypt.hash('testpass123', 10);
       const result = await pool.query(
@@ -27,11 +31,7 @@ describe('Event Controller Tests', () => {
 
   afterAll(async () => {
     try {
-      // Clean up test data
-      await pool.query('DELETE FROM event_ratings WHERE user_id = $1', [testUser.id]);
-      await pool.query('DELETE FROM saved_events WHERE user_id = $1', [testUser.id]);
-      await pool.query('DELETE FROM events WHERE created_by = $1', [testUser.id]);
-      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
+      await cleanupTestDatabase();
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;
@@ -160,10 +160,6 @@ describe('Event Controller Tests', () => {
         .send({ title: 'Try to update' });
 
       expect(response.status).toBe(403);
-
-      // Clean up
-      await pool.query('DELETE FROM events WHERE id = $1', [otherEvent.rows[0].id]);
-      await pool.query('DELETE FROM users WHERE id = $1', [otherUser.rows[0].id]);
     });
   });
 
@@ -205,10 +201,6 @@ describe('Event Controller Tests', () => {
       expect(response.status).toBe(201);
       expect(response.body.rating).toBe(ratingData.rating);
       expect(response.body.review).toBe(ratingData.review);
-
-      // Clean up
-      await pool.query('DELETE FROM reviews WHERE event_id = $1', [newEvent.rows[0].id]);
-      await pool.query('DELETE FROM events WHERE id = $1', [newEvent.rows[0].id]);
     });
   });
 
@@ -233,10 +225,6 @@ describe('Event Controller Tests', () => {
 
       expect(savedResponse.status).toBe(200);
       expect(savedResponse.body.some(event => event.id === newEvent.rows[0].id)).toBe(true);
-
-      // Clean up
-      await pool.query('DELETE FROM saved_events WHERE event_id = $1', [newEvent.rows[0].id]);
-      await pool.query('DELETE FROM events WHERE id = $1', [newEvent.rows[0].id]);
     });
   });
 }); 
