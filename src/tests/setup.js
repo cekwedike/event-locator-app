@@ -1,4 +1,3 @@
-require('dotenv').config({ path: '.env.test' });
 const { createTestDatabase } = require('../db/createTestDb');
 const { pool } = require('../config/database');
 
@@ -8,29 +7,6 @@ process.env.JWT_SECRET = 'test-secret-key';
 process.env.JWT_EXPIRES_IN = '1h';
 process.env.DB_NAME = 'event_locator_test';
 process.env.DB_PORT = '5433';
-
-// Mock Redis client
-jest.mock('../config/redis', () => ({
-  getClient: jest.fn(() => ({
-    get: jest.fn(),
-    set: jest.fn(),
-    del: jest.fn(),
-    quit: jest.fn()
-  }))
-}));
-
-// Mock RabbitMQ client
-jest.mock('../config/rabbitmq', () => ({
-  getChannel: jest.fn(() => ({
-    assertQueue: jest.fn(),
-    sendToQueue: jest.fn(),
-    consume: jest.fn(),
-    close: jest.fn()
-  }))
-}));
-
-// Set test timeout to 10 seconds
-jest.setTimeout(10000);
 
 // Initialize test database
 module.exports = async () => {

@@ -19,9 +19,10 @@
     "testMatch": [
       "**/tests/**/*.test.js"
     ],
-    "globalSetup": "<rootDir>/src/tests/setup.js",
+    "globalSetup": "src/tests/setup.js",
     "setupFilesAfterEnv": [
-      "<rootDir>/src/tests/setupAfterEnv.js"
+      "src/tests/jest.setup.js",
+      "src/tests/setupAfterEnv.js"
     ]
   },
   "dependencies": {
