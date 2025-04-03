@@ -3,10 +3,10 @@ const Joi = require('joi');
 // User validation schemas
 const userSchemas = {
   register: Joi.object({
+    name: Joi.string().required().min(2).max(50),
     email: Joi.string().email().required(),
-    password: Joi.string().min(6).required(),
-    name: Joi.string().required(),
-    preferred_language: Joi.string().valid('en', 'es', 'fr').default('en'),
+    password: Joi.string().required().min(8).max(50),
+    preferred_language: Joi.string().length(2).default('en'),
   }),
 
   login: Joi.object({
@@ -15,54 +15,104 @@ const userSchemas = {
   }),
 
   updatePreferences: Joi.object({
-    preferred_categories: Joi.array().items(Joi.string()),
-    notification_radius: Joi.number().min(1).max(100),
-    notification_enabled: Joi.boolean(),
+    preferred_language: Joi.string().length(2),
+    notification_preferences: Joi.object({
+      email: Joi.boolean(),
+      push: Joi.boolean(),
+    }),
   }),
 
   updateLocation: Joi.object({
-    latitude: Joi.number().min(-90).max(90).required(),
-    longitude: Joi.number().min(-180).max(180).required(),
+    latitude: Joi.number().required().min(-90).max(90),
+    longitude: Joi.number().required().min(-180).max(180),
   }),
 };
 
 // Event validation schemas
 const eventSchemas = {
   create: Joi.object({
-    title: Joi.string().required(),
-    description: Joi.string().required(),
-    latitude: Joi.number().min(-90).max(90).required(),
-    longitude: Joi.number().min(-180).max(180).required(),
-    start_time: Joi.date().iso().greater('now').required(),
+    title: Joi.string().required().min(3).max(100),
+    description: Joi.string().required().min(10).max(1000),
+    latitude: Joi.number().required().min(-90).max(90),
+    longitude: Joi.number().required().min(-180).max(180),
+    start_time: Joi.date().iso().required(),
     end_time: Joi.date().iso().min(Joi.ref('start_time')).required(),
-    category: Joi.string().required(),
+    category_id: Joi.number().integer().required(),
   }),
 
   update: Joi.object({
-    title: Joi.string(),
-    description: Joi.string(),
+    title: Joi.string().min(3).max(100),
+    description: Joi.string().min(10).max(1000),
     latitude: Joi.number().min(-90).max(90),
     longitude: Joi.number().min(-180).max(180),
-    start_time: Joi.date().iso().greater('now'),
+    start_time: Joi.date().iso(),
     end_time: Joi.date().iso().min(Joi.ref('start_time')),
-    category: Joi.string(),
+    category_id: Joi.number().integer(),
   }),
 
   search: Joi.object({
-    latitude: Joi.number().min(-90).max(90).required(),
-    longitude: Joi.number().min(-180).max(180).required(),
-    radius: Joi.number().min(1).max(100).default(10),
-    category: Joi.string(),
+    latitude: Joi.number().required().min(-90).max(90),
+    longitude: Joi.number().required().min(-180).max(180),
+    radius: Joi.number().min(0.1).max(100).default(10),
+    category_id: Joi.number().integer(),
     start_date: Joi.date().iso(),
     end_date: Joi.date().iso().min(Joi.ref('start_date')),
   }),
+
+  rate: Joi.object({
+    rating: Joi.number().required().min(1).max(5),
+    review: Joi.string().max(500),
+  }),
 };
 
-// Rating validation schema
-const ratingSchema = Joi.object({
-  rating: Joi.number().min(1).max(5).required(),
-  review: Joi.string().allow(''),
-});
+// Authentication validation schemas
+const authSchemas = {
+  refreshToken: Joi.object({
+    refresh_token: Joi.string().required(),
+  }),
+
+  changePassword: Joi.object({
+    current_password: Joi.string().required(),
+    new_password: Joi.string().required().min(8).max(50),
+  }),
+
+  forgotPassword: Joi.object({
+    email: Joi.string().email().required(),
+  }),
+
+  resetPassword: Joi.object({
+    token: Joi.string().required(),
+    new_password: Joi.string().required().min(8).max(50),
+  }),
+};
+
+// Category validation schemas
+const categorySchemas = {
+  create: Joi.object({
+    name: Joi.string().required().min(2).max(50),
+    description: Joi.string().max(200),
+    icon: Joi.string().max(50),
+  }),
+
+  update: Joi.object({
+    name: Joi.string().min(2).max(50),
+    description: Joi.string().max(200),
+    icon: Joi.string().max(50),
+  }),
+};
+
+// Review validation schemas
+const reviewSchemas = {
+  create: Joi.object({
+    rating: Joi.number().required().min(1).max(5),
+    comment: Joi.string().max(500),
+  }),
+
+  update: Joi.object({
+    rating: Joi.number().min(1).max(5),
+    comment: Joi.string().max(500),
+  }),
+};
 
 const validate = (schema) => (req, res, next) => {
   const { error } = schema.validate(req.body);
@@ -78,6 +128,8 @@ const validate = (schema) => (req, res, next) => {
 module.exports = {
   userSchemas,
   eventSchemas,
-  ratingSchema,
+  authSchemas,
+  categorySchemas,
+  reviewSchemas,
   validate,
 }; 

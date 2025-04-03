@@ -1,19 +1,9 @@
 const express = require('express');
-const { auth } = require('../middleware/auth');
-const { validate } = require('../middleware/validation');
-const { eventSchemas, ratingSchema } = require('../middleware/validation');
-const {
-  createEvent,
-  getEvent,
-  updateEvent,
-  deleteEvent,
-  searchEvents,
-  rateEvent,
-  saveEvent,
-  getSavedEvents,
-} = require('../controllers/eventController');
-
 const router = express.Router();
+const eventController = require('../controllers/eventController');
+const { authenticate } = require('../middleware/auth');
+const { validate } = require('../middleware/validation');
+const { eventSchemas } = require('../middleware/validation');
 
 /**
  * @swagger
@@ -49,7 +39,7 @@ const router = express.Router();
  *       200:
  *         description: List of events matching the search criteria
  */
-router.get('/search', validate(eventSchemas.search), searchEvents);
+router.get('/search', validate(eventSchemas.search), eventController.searchEvents);
 
 /**
  * @swagger
@@ -70,10 +60,10 @@ router.get('/search', validate(eventSchemas.search), searchEvents);
  *       404:
  *         description: Event not found
  */
-router.get('/:id', getEvent);
+router.get('/:id', eventController.getEvent);
 
 // Protected routes
-router.use(auth);
+router.use(authenticate);
 
 /**
  * @swagger
@@ -120,7 +110,7 @@ router.use(auth);
  *       400:
  *         description: Invalid input data
  */
-router.post('/', validate(eventSchemas.create), createEvent);
+router.post('/', validate(eventSchemas.create), eventController.createEvent);
 
 /**
  * @swagger
@@ -168,7 +158,7 @@ router.post('/', validate(eventSchemas.create), createEvent);
  *       404:
  *         description: Event not found
  */
-router.patch('/:id', validate(eventSchemas.update), updateEvent);
+router.put('/:id', validate(eventSchemas.update), eventController.updateEvent);
 
 /**
  * @swagger
@@ -193,7 +183,7 @@ router.patch('/:id', validate(eventSchemas.update), updateEvent);
  *       404:
  *         description: Event not found
  */
-router.delete('/:id', deleteEvent);
+router.delete('/:id', eventController.deleteEvent);
 
 /**
  * @swagger
@@ -233,7 +223,7 @@ router.delete('/:id', deleteEvent);
  *       404:
  *         description: Event not found
  */
-router.post('/:id/rate', validate(ratingSchema), rateEvent);
+router.post('/:id/rate', validate(eventSchemas.rate), eventController.rateEvent);
 
 /**
  * @swagger
@@ -256,11 +246,11 @@ router.post('/:id/rate', validate(ratingSchema), rateEvent);
  *       404:
  *         description: Event not found
  */
-router.post('/:id/save', saveEvent);
+router.post('/:id/save', eventController.saveEvent);
 
 /**
  * @swagger
- * /events/saved/events:
+ * /events/saved/list:
  *   get:
  *     summary: Get user's saved events
  *     tags: [Events]
@@ -270,6 +260,6 @@ router.post('/:id/save', saveEvent);
  *       200:
  *         description: List of saved events
  */
-router.get('/saved/events', getSavedEvents);
+router.get('/saved/list', eventController.getSavedEvents);
 
 module.exports = router; 
