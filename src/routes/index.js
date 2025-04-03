@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const userRoutes = require('./userRoutes');
 const eventRoutes = require('./eventRoutes');
+const authRoutes = require('./authRoutes');
+const categoryRoutes = require('./categoryRoutes');
+const reviewRoutes = require('./reviewRoutes');
 
 /**
  * @swagger
@@ -31,5 +34,8 @@ router.get('/health', (req, res) => {
 // Mount routes
 router.use('/users', userRoutes);
 router.use('/events', eventRoutes);
+router.use('/auth', authRoutes);
+router.use('/categories', categoryRoutes);
+router.use('/reviews', reviewRoutes);
 
 module.exports = router; 
