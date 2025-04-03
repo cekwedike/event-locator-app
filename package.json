@@ -12,20 +12,6 @@
     "migrate": "node src/db/migrate.js",
     "test:endpoints": "node src/tests/testEndpoints.js"
   },
-  "jest": {
-    "testEnvironment": "node",
-    "coveragePathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "testMatch": [
-      "**/tests/**/*.test.js"
-    ],
-    "globalSetup": "<rootDir>/src/tests/setup.js",
-    "setupFilesAfterEnv": [
-      "<rootDir>/src/tests/jest.setup.js",
-      "<rootDir>/src/tests/setupAfterEnv.js"
-    ]
-  },
   "dependencies": {
     "amqplib": "^0.10.3",
     "bcryptjs": "^2.4.3",
