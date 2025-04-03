@@ -7,7 +7,7 @@ const { eventSchemas } = require('../middleware/validation');
 
 /**
  * @swagger
- * /events/search:
+ * /api/events/search:
  *   get:
  *     summary: Search for events
  *     tags: [Events]
@@ -73,7 +73,7 @@ router.get('/search', validate(eventSchemas.search), eventController.searchEvent
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/{id}:
  *   get:
  *     summary: Get event by ID
  *     tags: [Events]
@@ -105,7 +105,7 @@ router.use(authenticate);
 
 /**
  * @swagger
- * /events:
+ * /api/events:
  *   post:
  *     summary: Create a new event
  *     tags: [Events]
@@ -170,7 +170,7 @@ router.post('/', validate(eventSchemas.create), eventController.createEvent);
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/{id}:
  *   put:
  *     summary: Update an event
  *     tags: [Events]
@@ -229,8 +229,6 @@ router.post('/', validate(eventSchemas.create), eventController.createEvent);
  *               $ref: '#/components/schemas/Error'
  *       401:
  *         description: Not authenticated
- *       403:
- *         description: Not authorized to update this event
  *       404:
  *         description: Event not found
  */
@@ -238,7 +236,7 @@ router.put('/:id', validate(eventSchemas.update), eventController.updateEvent);
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/{id}:
  *   delete:
  *     summary: Delete an event
  *     tags: [Events]
@@ -263,8 +261,6 @@ router.put('/:id', validate(eventSchemas.update), eventController.updateEvent);
  *                   type: string
  *       401:
  *         description: Not authenticated
- *       403:
- *         description: Not authorized to delete this event
  *       404:
  *         description: Event not found
  */
@@ -272,7 +268,7 @@ router.delete('/:id', eventController.deleteEvent);
 
 /**
  * @swagger
- * /events/{id}/rate:
+ * /api/events/{id}/rate:
  *   post:
  *     summary: Rate an event
  *     tags: [Events]
@@ -323,7 +319,7 @@ router.post('/:id/rate', validate(eventSchemas.rate), eventController.rateEvent)
 
 /**
  * @swagger
- * /events/{id}/save:
+ * /api/events/{id}/save:
  *   post:
  *     summary: Save an event
  *     tags: [Events]
@@ -361,7 +357,7 @@ router.post('/:id/save', eventController.saveEvent);
 
 /**
  * @swagger
- * /events/saved/list:
+ * /api/events/saved/list:
  *   get:
  *     summary: Get user's saved events
  *     tags: [Events]

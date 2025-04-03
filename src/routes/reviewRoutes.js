@@ -14,7 +14,7 @@ const router = express.Router();
 
 /**
  * @swagger
- * /events/{eventId}/reviews:
+ * /api/events/{eventId}/reviews:
  *   get:
  *     summary: Get all reviews for an event
  *     tags: [Reviews]
@@ -76,7 +76,7 @@ router.get('/events/:eventId/reviews', getEventReviews);
 
 /**
  * @swagger
- * /reviews/{id}:
+ * /api/reviews/{id}:
  *   get:
  *     summary: Get review by ID
  *     tags: [Reviews]
@@ -97,7 +97,7 @@ router.get('/:id', getReview);
 
 /**
  * @swagger
- * /events/{eventId}/reviews:
+ * /api/events/{eventId}/reviews:
  *   post:
  *     summary: Create a new review
  *     tags: [Reviews]
@@ -139,7 +139,7 @@ router.post('/events/:eventId/reviews', authenticate, validate(reviewSchemas.cre
 
 /**
  * @swagger
- * /reviews/{id}:
+ * /api/reviews/{id}:
  *   patch:
  *     summary: Update a review
  *     tags: [Reviews]
@@ -181,7 +181,7 @@ router.patch('/:id', authenticate, validate(reviewSchemas.update), updateReview)
 
 /**
  * @swagger
- * /reviews/{id}:
+ * /api/reviews/{id}:
  *   delete:
  *     summary: Delete a review
  *     tags: [Reviews]
