@@ -44,12 +44,17 @@ const register = async (req, res) => {
 
     const user = result.rows[0];
 
-    // Create user preferences
-    await pool.query(
-      `INSERT INTO user_preferences (user_id)
-       VALUES ($1)`,
-      [user.id]
-    );
+    // Try to create user preferences
+    try {
+      await pool.query(
+        `INSERT INTO user_preferences (user_id)
+         VALUES ($1)`,
+        [user.id]
+      );
+    } catch (error) {
+      logger.warn('Error creating user preferences:', error);
+      // Continue even if preferences table doesn't exist
+    }
 
     // Generate token
     const token = generateToken(user);
@@ -195,76 +200,89 @@ const updateLocation = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const userId = req.user.id;
+    logger.info(`Getting profile for user ${userId}`);
 
-    // Try to get from cache first
-    let cachedProfile = null;
-    try {
-      cachedProfile = await getCache(`user_profile:${userId}`);
-    } catch (error) {
-      logger.warn('Cache error in getProfile:', error);
-    }
-
-    if (cachedProfile) {
-      return res.json({
-        status: 'success',
-        data: cachedProfile,
-      });
-    }
-
-    // Get user profile with preferences and location
-    const { rows } = await pool.query(
+    // First check if user exists and get basic profile
+    const userResult = await pool.query(
       `SELECT 
-        u.id, 
-        u.email, 
-        u.name, 
-        u.preferred_language,
-        ST_X(u.location::geometry) as longitude,
-        ST_Y(u.location::geometry) as latitude,
-        COALESCE(up.notification_preferences, '{"email": true, "push": true}'::jsonb) as notification_preferences,
-        COALESCE(up.notification_radius, 10) as notification_radius,
-        COALESCE(up.notification_enabled, true) as notification_enabled,
-        COALESCE(up.theme, 'light') as theme
-      FROM users u
-      LEFT JOIN user_preferences up ON u.id = up.user_id
-      WHERE u.id = $1`,
+        id, 
+        email, 
+        name, 
+        preferred_language,
+        CASE 
+          WHEN location IS NOT NULL THEN ST_X(location::geometry)
+          ELSE NULL
+        END as longitude,
+        CASE 
+          WHEN location IS NOT NULL THEN ST_Y(location::geometry)
+          ELSE NULL
+        END as latitude
+      FROM users 
+      WHERE id = $1`,
       [userId]
     );
 
-    if (rows.length === 0) {
+    if (userResult.rows.length === 0) {
+      logger.warn(`User ${userId} not found in database`);
       return res.status(404).json({
         status: 'error',
-        message: 'User not found',
+        message: 'User not found'
       });
     }
 
-    const profile = rows[0];
+    const profile = userResult.rows[0];
 
-    // Create user preferences if they don't exist
-    if (!profile.notification_preferences) {
-      await pool.query(
-        `INSERT INTO user_preferences (user_id)
-         VALUES ($1)
-         ON CONFLICT (user_id) DO NOTHING`,
+    // Try to get preferences
+    try {
+      const prefResult = await pool.query(
+        `SELECT 
+          notification_preferences,
+          notification_radius,
+          notification_enabled,
+          theme,
+          preferred_categories
+        FROM user_preferences 
+        WHERE user_id = $1`,
         [userId]
       );
+
+      if (prefResult.rows.length > 0) {
+        Object.assign(profile, prefResult.rows[0]);
+      }
+    } catch (error) {
+      logger.warn(`Error getting preferences for user ${userId}:`, error);
+      // Continue with default values if preferences table doesn't exist
     }
+
+    // Set default values for preferences
+    const finalProfile = {
+      ...profile,
+      notification_preferences: profile.notification_preferences || { email: true, push: true },
+      notification_radius: profile.notification_radius || 10,
+      notification_enabled: profile.notification_enabled === null ? true : profile.notification_enabled,
+      theme: profile.theme || 'light',
+      preferred_categories: profile.preferred_categories || []
+    };
 
     // Try to cache the profile
     try {
-      await setCache(`user_profile:${userId}`, profile);
+      await setCache(`user_profile:${userId}`, finalProfile);
+      logger.info('Profile cached successfully');
     } catch (error) {
       logger.warn('Cache error in getProfile:', error);
     }
 
     res.json({
       status: 'success',
-      data: profile,
+      data: finalProfile,
     });
   } catch (error) {
-    logger.error('Get profile error:', error);
+    logger.error('Get profile error:', error.message);
+    logger.error('Error stack:', error.stack);
     res.status(500).json({
       status: 'error',
       message: 'Error getting profile',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 };

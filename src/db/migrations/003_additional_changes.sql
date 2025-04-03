@@ -9,14 +9,17 @@ BEGIN
     END IF;
 END $$;
 
--- Create user_preferences table
-CREATE TABLE IF NOT EXISTS user_preferences (
+-- Drop and recreate user_preferences table with correct columns
+DROP TABLE IF EXISTS user_preferences;
+
+CREATE TABLE user_preferences (
     id SERIAL PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     notification_preferences JSONB DEFAULT '{"email": true, "push": true}'::jsonb,
     notification_radius INTEGER DEFAULT 10,
     notification_enabled BOOLEAN DEFAULT true,
     theme VARCHAR(20) DEFAULT 'light',
+    preferred_categories INTEGER[] DEFAULT ARRAY[]::INTEGER[],
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(user_id)
