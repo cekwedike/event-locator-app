@@ -1,7 +1,7 @@
 const express = require('express');
 const { authenticate } = require('../middleware/auth');
 const { validate } = require('../middleware/validation');
-const { authSchemas } = require('../middleware/validation');
+const { authSchemas, userSchemas } = require('../middleware/validation');
 const {
   refreshToken,
   logout,
@@ -9,12 +9,124 @@ const {
   resetPassword,
   forgotPassword,
 } = require('../controllers/authController');
+const { register, login } = require('../controllers/userController');
 
 const router = express.Router();
 
 /**
  * @swagger
- * /auth/refresh:
+ * /api/auth/register:
+ *   post:
+ *     summary: Register a new user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *               - name
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *                 minLength: 6
+ *               name:
+ *                 type: string
+ *               preferred_language:
+ *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 2
+ *                 default: "en"
+ *     responses:
+ *       201:
+ *         description: User registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         email:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                     token:
+ *                       type: string
+ *       400:
+ *         description: Invalid input data
+ */
+router.post('/register', validate(userSchemas.register), register);
+
+/**
+ * @swagger
+ * /api/auth/login:
+ *   post:
+ *     summary: Login user
+ *     tags: [Authentication]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - email
+ *               - password
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *               password:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: success
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     user:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: integer
+ *                         email:
+ *                           type: string
+ *                         name:
+ *                           type: string
+ *                     token:
+ *                       type: string
+ *       401:
+ *         description: Invalid credentials
+ */
+router.post('/login', validate(userSchemas.login), login);
+
+/**
+ * @swagger
+ * /api/auth/refresh:
  *   post:
  *     summary: Refresh access token
  *     tags: [Authentication]
@@ -44,19 +156,11 @@ const router = express.Router();
  *       401:
  *         description: Invalid refresh token
  */
-router.post('/refresh', async (req, res) => {
-  try {
-    const { refreshToken } = req.body;
-    // TODO: Implement token refresh
-    res.status(200).json({ message: 'Token refreshed successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/refresh', refreshToken);
 
 /**
  * @swagger
- * /auth/logout:
+ * /api/auth/logout:
  *   post:
  *     summary: Logout user
  *     tags: [Authentication]
@@ -68,18 +172,11 @@ router.post('/refresh', async (req, res) => {
  *       401:
  *         description: Not authenticated
  */
-router.post('/logout', authenticate, async (req, res) => {
-  try {
-    // TODO: Implement logout
-    res.status(200).json({ message: 'Logged out successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/logout', authenticate, logout);
 
 /**
  * @swagger
- * /auth/change-password:
+ * /api/auth/change-password:
  *   post:
  *     summary: Change user password
  *     tags: [Authentication]
@@ -99,7 +196,6 @@ router.post('/logout', authenticate, async (req, res) => {
  *                 type: string
  *               newPassword:
  *                 type: string
- *                 minLength: 6
  *     responses:
  *       200:
  *         description: Password changed successfully
@@ -108,19 +204,11 @@ router.post('/logout', authenticate, async (req, res) => {
  *       401:
  *         description: Not authenticated
  */
-router.post('/change-password', authenticate, async (req, res) => {
-  try {
-    const { currentPassword, newPassword } = req.body;
-    // TODO: Implement change password
-    res.status(200).json({ message: 'Password changed successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/change-password', authenticate, validate(authSchemas.changePassword), changePassword);
 
 /**
  * @swagger
- * /auth/forgot-password:
+ * /api/auth/forgot-password:
  *   post:
  *     summary: Request password reset
  *     tags: [Authentication]
@@ -142,19 +230,11 @@ router.post('/change-password', authenticate, async (req, res) => {
  *       404:
  *         description: User not found
  */
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { email } = req.body;
-    // TODO: Implement forgot password
-    res.status(200).json({ message: 'Password reset email sent' });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/forgot-password', validate(authSchemas.forgotPassword), forgotPassword);
 
 /**
  * @swagger
- * /auth/reset-password:
+ * /api/auth/reset-password:
  *   post:
  *     summary: Reset password with token
  *     tags: [Authentication]
@@ -172,21 +252,12 @@ router.post('/forgot-password', async (req, res) => {
  *                 type: string
  *               newPassword:
  *                 type: string
- *                 minLength: 6
  *     responses:
  *       200:
  *         description: Password reset successful
  *       400:
  *         description: Invalid or expired token
  */
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { token, newPassword } = req.body;
-    // TODO: Implement reset password
-    res.status(200).json({ message: 'Password reset successfully' });
-  } catch (error) {
-    next(error);
-  }
-});
+router.post('/reset-password', validate(authSchemas.resetPassword), resetPassword);
 
 module.exports = router; 

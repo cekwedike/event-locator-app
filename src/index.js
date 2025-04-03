@@ -5,7 +5,7 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
 const swaggerSpecs = require('./config/swagger');
-const { Pool } = require('pg');
+const { pool, setupDatabase } = require('./config/database');
 const logger = require('./utils/logger');
 const redis = require('./config/redis');
 const rabbitmq = require('./config/rabbitmq');
@@ -39,9 +39,9 @@ app.get('/', (req, res) => {
 });
 
 // Routes
+app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/events', eventRoutes);
-app.use('/api/auth', authRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 
@@ -61,6 +61,10 @@ const PORT = process.env.PORT || 3000;
 
 const startServer = async () => {
   try {
+    // Initialize database
+    await setupDatabase();
+    logger.info('Database initialized successfully');
+
     // Connect to services
     await redis.connect();
     await rabbitmq.connect();
