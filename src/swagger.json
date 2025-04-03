@@ -78,11 +78,11 @@
     "/api/health": {
       "get": {
         "summary": "Health check endpoint",
-        "description": "Returns the health status of the API",
+        "description": "Returns the health status of the API and its dependent services",
         "tags": ["System"],
         "responses": {
           "200": {
-            "description": "API is healthy",
+            "description": "API and services are healthy",
             "content": {
               "application/json": {
                 "schema": {
@@ -95,6 +95,54 @@
                     "timestamp": {
                       "type": "string",
                       "format": "date-time"
+                    },
+                    "services": {
+                      "type": "object",
+                      "properties": {
+                        "database": {
+                          "type": "string",
+                          "example": "connected"
+                        },
+                        "redis": {
+                          "type": "string",
+                          "example": "connected"
+                        },
+                        "rabbitmq": {
+                          "type": "string",
+                          "example": "connected"
+                        }
+                      }
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "One or more services are unhealthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "error"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Service unavailable"
+                    },
+                    "error": {
+                      "type": "string"
                     }
                   }
                 }

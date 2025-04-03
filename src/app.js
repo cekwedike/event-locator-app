@@ -14,20 +14,15 @@ const app = express();
 // Middleware
 app.use(helmet());
 app.use(cors());
-app.use(express.json());
 app.use(morgan('dev'));
-
-// Health check endpoint
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok' });
-});
+app.use(express.json());
 
 // Routes
-app.use('/users', userRoutes);
-app.use('/auth', authRoutes);
-app.use('/events', eventRoutes);
-app.use('/categories', categoryRoutes);
-app.use('/reviews', reviewRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Error handling
 app.use(errorHandler);

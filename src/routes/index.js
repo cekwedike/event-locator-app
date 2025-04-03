@@ -8,7 +8,7 @@ const reviewRoutes = require('./reviewRoutes');
 
 /**
  * @swagger
- * /health:
+ * /api/health:
  *   get:
  *     summary: Check API health status
  *     tags: [Health]
@@ -23,13 +23,43 @@ const reviewRoutes = require('./reviewRoutes');
  *                 status:
  *                   type: string
  *                   example: ok
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
+ *                 services:
+ *                   type: object
+ *                   properties:
+ *                     database:
+ *                       type: string
+ *                       example: connected
+ *                     redis:
+ *                       type: string
+ *                       example: connected
+ *                     rabbitmq:
+ *                       type: string
+ *                       example: connected
+ *                 version:
+ *                   type: string
+ *                   example: 1.0.0
+ *       503:
+ *         description: One or more services are unhealthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 status:
+ *                   type: string
+ *                   example: error
+ *                 timestamp:
+ *                   type: string
+ *                   format: date-time
  *                 message:
  *                   type: string
- *                   example: Server is running
+ *                   example: Service unavailable
+ *                 error:
+ *                   type: string
  */
-router.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', message: 'Server is running' });
-});
 
 // Mount routes
 router.use('/users', userRoutes);

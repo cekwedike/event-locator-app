@@ -46,8 +46,50 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api/reviews', reviewRoutes);
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (req, res) => {
+  try {
+    // Check database connection
+    const dbStatus = await pool.query('SELECT NOW()');
+    
+    // Check Redis connection
+    let redisStatus = 'disconnected';
+    try {
+      if (redis.status === 'ready') {
+        redisStatus = 'connected';
+      }
+    } catch (error) {
+      logger.warn('Redis health check failed:', error);
+    }
+
+    // Check RabbitMQ connection
+    let rabbitmqStatus = 'disconnected';
+    try {
+      if (rabbitmq.connection && rabbitmq.connection.connection.serverProperties) {
+        rabbitmqStatus = 'connected';
+      }
+    } catch (error) {
+      logger.warn('RabbitMQ health check failed:', error);
+    }
+
+    res.json({
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      services: {
+        database: dbStatus.rows ? 'connected' : 'disconnected',
+        redis: redisStatus,
+        rabbitmq: rabbitmqStatus
+      },
+      version: '1.0.0'
+    });
+  } catch (error) {
+    logger.error('Health check failed:', error);
+    res.status(503).json({
+      status: 'error',
+      timestamp: new Date().toISOString(),
+      message: 'Service unavailable',
+      error: error.message
+    });
+  }
 });
 
 // Error handling middleware
