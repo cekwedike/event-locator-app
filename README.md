@@ -2,6 +2,11 @@
 
 A multi-user event locator application with geospatial features.
 
+## Author
+
+**Chidiebere Ekwedike**  
+GitHub: [cekwedike](https://github.com/cekwedike)
+
 ## Features
 
 - User authentication and authorization
@@ -33,7 +38,7 @@ A multi-user event locator application with geospatial features.
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/yourusername/event-locator-app.git
+git clone https://github.com/cekwedike/event-locator-app.git
 cd event-locator-app
 ```
 
@@ -102,8 +107,11 @@ npm run test:coverage
 
 ## API Documentation
 
-The API documentation is available at `/api-docs` when the server is running.
+Once the application is running, you can access the API documentation at:
+```
+http://localhost:3000/api-docs
+```
 
 ## License
 
-MIT 
+This project is licensed under the MIT License - see the LICENSE file for details. 
