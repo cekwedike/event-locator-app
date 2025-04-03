@@ -43,6 +43,10 @@ i18next
 app.use(i18nextMiddleware.handle(i18next));
 
 // Routes
+app.get('/', (req, res) => {
+  res.redirect('/api-docs');
+});
+
 app.use('/api', routes);
 
 // Error handling
