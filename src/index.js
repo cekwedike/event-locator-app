@@ -4,16 +4,18 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
-const i18next = require('i18next');
-const i18nextMiddleware = require('i18next-http-middleware');
-const i18nextBackend = require('i18next-fs-backend');
-const { setupDatabase, pool } = require('./config/database');
-const { setupRedis } = require('./config/redis');
-const { setupRabbitMQ } = require('./config/rabbitmq');
-const routes = require('./routes');
-const { errorHandler } = require('./middleware/errorHandler');
+const swaggerDocument = require('./swagger.json');
+const { Pool } = require('pg');
 const logger = require('./utils/logger');
-const swaggerSpecs = require('./config/swagger');
+const redis = require('./config/redis');
+const rabbitmq = require('./config/rabbitmq');
+
+// Import routes
+const userRoutes = require('./routes/userRoutes');
+const eventRoutes = require('./routes/eventRoutes');
+const authRoutes = require('./routes/authRoutes');
+const categoryRoutes = require('./routes/categoryRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 const app = express();
 
@@ -21,86 +23,62 @@ const app = express();
 app.use(helmet());
 app.use(cors());
 app.use(express.json());
-app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+app.use(morgan('dev'));
 
-// Swagger documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
-
-// i18n setup
-i18next
-  .use(i18nextBackend)
-  .use(i18nextMiddleware.LanguageDetector)
-  .init({
-    backend: {
-      loadPath: __dirname + '/locales/{{lng}}/{{ns}}.json',
-    },
-    fallbackLng: process.env.DEFAULT_LANGUAGE,
-    preload: process.env.SUPPORTED_LANGUAGES.split(','),
-    ns: ['translation'],
-    defaultNS: 'translation',
-  });
-
-app.use(i18nextMiddleware.handle(i18next));
+// API Documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
 
 // Routes
-app.get('/', (req, res) => {
-  res.redirect('/api-docs');
+app.use('/api/users', userRoutes);
+app.use('/api/events', eventRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/categories', categoryRoutes);
+app.use('/api/reviews', reviewRoutes);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-app.use('/api', routes);
-
-// Error handling
-app.use(errorHandler);
+// Error handling middleware
+app.use((err, req, res, next) => {
+  logger.error(err.stack);
+  res.status(500).json({ error: 'Something went wrong!' });
+});
 
 // Start server
+const PORT = process.env.PORT || 3000;
+
 const startServer = async () => {
   try {
-    // Required services
-    await setupDatabase();
-    await setupRedis();
-    
-    // Optional services
-    try {
-      await setupRabbitMQ();
-      logger.info('RabbitMQ connected successfully');
-    } catch (error) {
-      logger.warn('RabbitMQ connection failed - continuing without message queue functionality');
-    }
-    
-    const PORT = process.env.PORT || 3000;
+    // Connect to services
+    await redis.connect();
+    await rabbitmq.connect();
+
     app.listen(PORT, () => {
-      const serverUrl = `http://localhost:${PORT}`;
-      const apiDocsUrl = `${serverUrl}/api-docs`;
-      const healthCheckUrl = `${serverUrl}/api/health`;
-      
       console.log('\n🚀 Server is running!');
       console.log('----------------------------------------');
-      console.log(`🌐 Server URL: ${serverUrl}`);
-      console.log(`📚 API Documentation: ${apiDocsUrl}`);
-      console.log(`❤️  Health Check: ${healthCheckUrl}`);
+      console.log(`🌐 Server URL: http://localhost:${PORT}`);
+      console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+      console.log(`❤️  Health Check: http://localhost:${PORT}/api/health`);
       console.log('----------------------------------------\n');
       
       logger.info(`Server is running on port ${PORT}`);
-      logger.info(`API documentation available at ${apiDocsUrl}`);
+      logger.info(`API documentation available at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
-    // Don't exit the process, just log the error
-    // This allows the application to start even if some services are not available
+    process.exit(1);
   }
 };
 
-// Only start the server if this file is run directly
-if (require.main === module) {
-  startServer();
-}
-
 // Handle unhandled promise rejections
 process.on('unhandledRejection', (err) => {
-  console.error('Unhandled Promise Rejection:', err);
-  // Close server & exit process
-  pool.end();
-  process.exit(1);
+  logger.error('Unhandled Promise Rejection:', err);
+  // Don't exit the process in development
+  if (process.env.NODE_ENV !== 'development') {
+    process.exit(1);
+  }
 });
 
-module.exports = app; 
+startServer(); 

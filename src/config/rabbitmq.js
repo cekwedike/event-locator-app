@@ -1,71 +1,51 @@
 const amqp = require('amqplib');
 const logger = require('../utils/logger');
 
-let channel;
-let connection;
+let channel = null;
+let connection = null;
 
-const setupRabbitMQ = async () => {
+const connect = async () => {
   try {
+    // Skip RabbitMQ setup in development mode
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('Skipping RabbitMQ setup in development mode');
+      return;
+    }
+
     connection = await amqp.connect(process.env.RABBITMQ_URL || 'amqp://localhost');
     channel = await connection.createChannel();
-    logger.info('RabbitMQ setup completed');
+
+    // Create queues
+    await channel.assertQueue('event_notifications', { durable: true });
+    await channel.assertQueue('email_notifications', { durable: true });
+    await channel.assertQueue('push_notifications', { durable: true });
+
+    logger.info('Successfully connected to RabbitMQ');
   } catch (error) {
     logger.error('RabbitMQ setup failed:', error);
-    throw error;
+    logger.warn('RabbitMQ connection failed - continuing without message queue functionality');
   }
 };
 
-// Message publishing helper
-const publishMessage = async (queue, message) => {
+const getChannel = () => {
   if (!channel) {
-    logger.debug('RabbitMQ not connected - message not sent');
-    return;
+    throw new Error('RabbitMQ channel not initialized');
   }
-
-  try {
-    await channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
-    logger.info(`Message published to ${queue}`);
-  } catch (error) {
-    logger.error('Error publishing message:', error);
-  }
+  return channel;
 };
 
-// Message consuming helper
-const consumeMessages = async (queue, callback) => {
-  if (!channel) {
-    logger.debug('RabbitMQ not connected - message consumption not started');
-    return;
-  }
-
+const close = async () => {
   try {
-    await channel.consume(queue, (msg) => {
-      if (msg) {
-        const content = JSON.parse(msg.content.toString());
-        callback(content);
-        channel.ack(msg);
-      }
-    });
-    logger.info(`Consuming messages from ${queue}`);
+    if (channel) await channel.close();
+    if (connection) await connection.close();
+    logger.info('RabbitMQ connection closed');
   } catch (error) {
-    logger.error('Error consuming messages:', error);
-  }
-};
-
-// Close connection
-const closeConnection = async () => {
-  if (channel) {
-    await channel.close();
-  }
-  if (connection) {
-    await connection.close();
+    logger.error('Error closing RabbitMQ connection:', error);
   }
 };
 
 module.exports = {
-  setupRabbitMQ,
-  publishMessage,
-  consumeMessages,
-  closeConnection,
-  channel,
-  connection,
+  connect,
+  getChannel,
+  close
 }; 

@@ -1,109 +1,116 @@
-const Redis = require('redis');
+const Redis = require('ioredis');
 const logger = require('../utils/logger');
 
-let redisClient;
-let pubClient;
-let subClient;
+let client = null;
 
-const setupRedis = async () => {
-  if (process.env.NODE_ENV === 'development' && !process.env.FORCE_REDIS) {
-    logger.info('Skipping Redis setup in development mode');
-    return;
-  }
-
+const connect = async () => {
   try {
-    // Create Redis client for caching
-    redisClient = Redis.createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    // Skip Redis setup in development mode
+    if (process.env.NODE_ENV === 'development') {
+      logger.info('Skipping Redis setup in development mode');
+      return;
+    }
+
+    client = new Redis({
+      host: process.env.REDIS_HOST || 'localhost',
+      port: process.env.REDIS_PORT || 6379,
+      password: process.env.REDIS_PASSWORD,
+      retryStrategy: (times) => {
+        const delay = Math.min(times * 50, 2000);
+        return delay;
+      }
     });
 
-    // Create separate clients for pub/sub
-    pubClient = Redis.createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
-    });
-    subClient = Redis.createClient({
-      url: `redis://${process.env.REDIS_HOST}:${process.env.REDIS_PORT}`,
+    client.on('connect', () => {
+      logger.info('Successfully connected to Redis');
     });
 
-    // Connect all clients
-    await Promise.all([
-      redisClient.connect(),
-      pubClient.connect(),
-      subClient.connect(),
-    ]);
+    client.on('error', (err) => {
+      logger.error('Redis connection error:', err);
+    });
 
-    // Handle connection errors
-    redisClient.on('error', (err) => logger.error('Redis Client Error:', err));
-    pubClient.on('error', (err) => logger.error('Redis Pub Client Error:', err));
-    subClient.on('error', (err) => logger.error('Redis Sub Client Error:', err));
-
-    logger.info('Redis connected successfully');
+    return client;
   } catch (error) {
-    logger.warn('Redis connection error - continuing without Redis:', error);
+    logger.error('Redis setup failed:', error);
+    logger.warn('Redis connection failed - continuing without caching functionality');
+    return null;
+  }
+};
+
+const getClient = () => {
+  if (!client) {
+    throw new Error('Redis client not initialized');
+  }
+  return client;
+};
+
+const close = async () => {
+  if (client) {
+    await client.quit();
+    logger.info('Redis connection closed');
   }
 };
 
 // Cache helper functions
 const getCache = async (key) => {
-  if (!redisClient) {
-    return null;
-  }
-
   try {
-    const data = await redisClient.get(key);
-    return data ? JSON.parse(data) : null;
+    if (!client) {
+      return null;
+    }
+    const value = await client.get(key);
+    return value ? JSON.parse(value) : null;
   } catch (error) {
-    logger.error('Error getting cache:', error);
+    logger.error('Error getting from cache:', error);
     return null;
   }
 };
 
-const setCache = async (key, value, expiration = 3600) => {
-  if (!redisClient) {
-    return;
-  }
-
+const setCache = async (key, value, expireSeconds = 3600) => {
   try {
-    await redisClient.set(key, JSON.stringify(value), {
-      EX: expiration,
-    });
+    if (!client) {
+      return false;
+    }
+    await client.set(key, JSON.stringify(value), 'EX', expireSeconds);
+    return true;
   } catch (error) {
     logger.error('Error setting cache:', error);
+    return false;
   }
 };
 
 const deleteCache = async (key) => {
-  if (!redisClient) {
-    return;
-  }
-
   try {
-    await redisClient.del(key);
+    if (!client) {
+      return false;
+    }
+    await client.del(key);
+    return true;
   } catch (error) {
-    logger.error('Error deleting cache:', error);
+    logger.error('Error deleting from cache:', error);
+    return false;
   }
 };
 
 // Pub/Sub helper functions
 const publish = async (channel, message) => {
-  if (!pubClient) {
+  if (!client) {
     return;
   }
 
   try {
-    await pubClient.publish(channel, JSON.stringify(message));
+    await client.publish(channel, JSON.stringify(message));
   } catch (error) {
     logger.error('Error publishing message:', error);
   }
 };
 
 const subscribe = async (channel, callback) => {
-  if (!subClient) {
+  if (!client) {
     return;
   }
 
   try {
-    await subClient.subscribe(channel, (message) => {
+    await client.subscribe(channel, (message) => {
       callback(JSON.parse(message));
     });
   } catch (error) {
@@ -112,13 +119,12 @@ const subscribe = async (channel, callback) => {
 };
 
 module.exports = {
-  setupRedis,
+  connect,
+  getClient,
+  close,
   getCache,
   setCache,
   deleteCache,
   publish,
   subscribe,
-  redisClient,
-  pubClient,
-  subClient,
 }; 

@@ -136,8 +136,13 @@ const updatePreferences = async (req, res) => {
       [preferred_categories, notification_radius, notification_enabled, userId]
     );
 
-    // Clear cache for user preferences
-    await deleteCache(`user_preferences:${userId}`);
+    // Try to clear cache
+    try {
+      await deleteCache(`user_preferences:${userId}`);
+      await deleteCache(`user_profile:${userId}`);
+    } catch (error) {
+      logger.warn('Cache error in updatePreferences:', error);
+    }
 
     res.json({
       status: 'success',
@@ -166,8 +171,13 @@ const updateLocation = async (req, res) => {
       [longitude, latitude, userId]
     );
 
-    // Clear cache for user location
-    await deleteCache(`user_location:${userId}`);
+    // Try to clear cache
+    try {
+      await deleteCache(`user_location:${userId}`);
+      await deleteCache(`user_profile:${userId}`);
+    } catch (error) {
+      logger.warn('Cache error in updateLocation:', error);
+    }
 
     res.json({
       status: 'success',
@@ -187,7 +197,13 @@ const getProfile = async (req, res) => {
     const userId = req.user.id;
 
     // Try to get from cache first
-    const cachedProfile = await getCache(`user_profile:${userId}`);
+    let cachedProfile = null;
+    try {
+      cachedProfile = await getCache(`user_profile:${userId}`);
+    } catch (error) {
+      logger.warn('Cache error in getProfile:', error);
+    }
+
     if (cachedProfile) {
       return res.json({
         status: 'success',
@@ -198,9 +214,7 @@ const getProfile = async (req, res) => {
     // Get user profile with preferences
     const { rows } = await pool.query(
       `SELECT u.id, u.email, u.name, u.preferred_language,
-              up.preferred_categories, up.notification_radius, up.notification_enabled,
-              ST_X(u.location::geometry) as longitude,
-              ST_Y(u.location::geometry) as latitude
+              up.notification_preferences, up.theme
        FROM users u
        LEFT JOIN user_preferences up ON u.id = up.user_id
        WHERE u.id = $1`,
@@ -216,8 +230,12 @@ const getProfile = async (req, res) => {
 
     const profile = rows[0];
 
-    // Cache the profile
-    await setCache(`user_profile:${userId}`, profile);
+    // Try to cache the profile
+    try {
+      await setCache(`user_profile:${userId}`, profile);
+    } catch (error) {
+      logger.warn('Cache error in getProfile:', error);
+    }
 
     res.json({
       status: 'success',
