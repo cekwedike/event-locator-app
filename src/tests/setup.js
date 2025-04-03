@@ -10,14 +10,19 @@ process.env.JWT_EXPIRES_IN = '1h';
 // Initialize test database
 module.exports = async () => {
   try {
+    console.log('Starting test database setup...');
+    
     // Create test database if it doesn't exist
     await createTestDatabase();
+    console.log('Test database created or already exists');
 
     // Connect to test database
     await pool.connect();
+    console.log('Connected to test database');
 
     // Enable PostGIS extension
     await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
+    console.log('PostGIS extension enabled');
     
     // Drop all tables if they exist
     await pool.query(`
@@ -29,6 +34,7 @@ module.exports = async () => {
       DROP TABLE IF EXISTS user_preferences CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
     `);
+    console.log('Dropped existing tables');
 
     // Create test tables
     await pool.query(`
@@ -107,6 +113,7 @@ module.exports = async () => {
         UNIQUE(user_id, event_id, type)
       );
     `);
+    console.log('Created test tables');
 
     // Create indexes
     await pool.query(`
@@ -118,6 +125,7 @@ module.exports = async () => {
       CREATE INDEX IF NOT EXISTS idx_event_notifications_user ON event_notifications(user_id);
       CREATE INDEX IF NOT EXISTS idx_event_notifications_event ON event_notifications(event_id);
     `);
+    console.log('Created indexes');
 
     console.log('Test database setup completed successfully');
   } catch (error) {

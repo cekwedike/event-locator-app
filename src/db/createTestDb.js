@@ -13,18 +13,20 @@ async function createTestDatabase() {
 
   try {
     await client.connect();
+    console.log('Connected to postgres database');
 
     // Check if database exists
     const checkDb = await client.query(
-      "SELECT 1 FROM pg_database WHERE datname = 'event_locator_test'"
+      "SELECT 1 FROM pg_database WHERE datname = $1",
+      [process.env.DB_NAME]
     );
 
     if (checkDb.rows.length === 0) {
       // Create the test database if it doesn't exist
-      await client.query('CREATE DATABASE event_locator_test');
-      console.log('Test database created successfully');
+      await client.query(`CREATE DATABASE ${process.env.DB_NAME}`);
+      console.log(`Test database ${process.env.DB_NAME} created successfully`);
     } else {
-      console.log('Test database already exists');
+      console.log(`Test database ${process.env.DB_NAME} already exists`);
     }
   } catch (error) {
     console.error('Error creating test database:', error);
