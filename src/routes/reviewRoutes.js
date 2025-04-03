@@ -12,6 +12,9 @@ const {
 
 const router = express.Router();
 
+// Apply authentication middleware to all routes
+router.use(authenticate);
+
 /**
  * @swagger
  * /api/events/{eventId}/reviews:
@@ -48,21 +51,7 @@ const router = express.Router();
  *                 reviews:
  *                   type: array
  *                   items:
- *                     type: object
- *                     properties:
- *                       id:
- *                         type: integer
- *                       rating:
- *                         type: integer
- *                       comment:
- *                         type: string
- *                       userId:
- *                         type: integer
- *                       eventId:
- *                         type: integer
- *                       createdAt:
- *                         type: string
- *                         format: date-time
+ *                     $ref: '#/components/schemas/Review'
  *                 total:
  *                   type: integer
  *                 page:
@@ -90,6 +79,10 @@ router.get('/events/:eventId/reviews', getEventReviews);
  *     responses:
  *       200:
  *         description: Review details
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Review'
  *       404:
  *         description: Review not found
  */
@@ -128,14 +121,18 @@ router.get('/:id', getReview);
  *     responses:
  *       201:
  *         description: Review created successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Review'
  *       400:
- *         description: Invalid input data
+ *         description: Invalid input data or already reviewed
  *       401:
  *         description: Not authenticated
  *       404:
  *         description: Event not found
  */
-router.post('/events/:eventId/reviews', authenticate, validate(reviewSchemas.create), createReview);
+router.post('/events/:eventId/reviews', validate(reviewSchemas.create), createReview);
 
 /**
  * @swagger
@@ -168,6 +165,10 @@ router.post('/events/:eventId/reviews', authenticate, validate(reviewSchemas.cre
  *     responses:
  *       200:
  *         description: Review updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Review'
  *       400:
  *         description: Invalid input data
  *       401:
@@ -177,7 +178,7 @@ router.post('/events/:eventId/reviews', authenticate, validate(reviewSchemas.cre
  *       404:
  *         description: Review not found
  */
-router.patch('/:id', authenticate, validate(reviewSchemas.update), updateReview);
+router.patch('/:id', validate(reviewSchemas.update), updateReview);
 
 /**
  * @swagger
@@ -204,6 +205,6 @@ router.patch('/:id', authenticate, validate(reviewSchemas.update), updateReview)
  *       404:
  *         description: Review not found
  */
-router.delete('/:id', authenticate, deleteReview);
+router.delete('/:id', deleteReview);
 
 module.exports = router; 
