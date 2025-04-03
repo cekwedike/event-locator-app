@@ -2,6 +2,7 @@ const { pool } = require('../config/database');
 const { getCache, setCache, deleteCache } = require('../config/redis');
 const { publishMessage } = require('../config/rabbitmq');
 const logger = require('../utils/logger');
+const { createReview: createEventReview } = require('./reviewController');
 
 const createEvent = async (req, res) => {
   try {
@@ -215,34 +216,31 @@ const rateEvent = async (req, res) => {
   try {
     const { id } = req.params;
     const { rating, review } = req.body;
-    const userId = req.user.id;
-
-    // Check if event exists
-    const eventResult = await pool.query(
-      'SELECT id FROM events WHERE id = $1',
-      [id]
-    );
-
-    if (eventResult.rows.length === 0) {
-      return res.status(404).json({ message: 'Event not found' });
-    }
-
-    // Check if user has already rated this event
-    const existingRating = await pool.query(
-      'SELECT id FROM reviews WHERE user_id = $1 AND event_id = $2',
-      [userId, id]
-    );
-
-    if (existingRating.rows.length > 0) {
-      return res.status(400).json({ message: 'You have already rated this event' });
-    }
-
-    const result = await pool.query(
-      'INSERT INTO reviews (user_id, event_id, rating, comment) VALUES ($1, $2, $3, $4) RETURNING *',
-      [userId, id, rating, review]
-    );
-
-    res.status(201).json(result.rows[0]);
+    
+    // Create a mock request object with the necessary properties
+    const mockReq = {
+      params: { eventId: id },
+      body: { rating, comment: review },
+      user: req.user
+    };
+    
+    // Create a mock response object to capture the response
+    const mockRes = {
+      status: function(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json: function(data) {
+        this.data = data;
+        return this;
+      }
+    };
+    
+    // Call the review controller's createReview function
+    await createEventReview(mockReq, mockRes);
+    
+    // Forward the response
+    res.status(mockRes.statusCode).json(mockRes.data);
   } catch (error) {
     logger.error('Error rating event:', error);
     res.status(500).json({ message: 'Error rating event' });
