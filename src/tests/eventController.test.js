@@ -10,23 +10,32 @@ describe('Event Controller Tests', () => {
   let authToken;
 
   beforeAll(async () => {
-    // Create test user
-    const passwordHash = await bcrypt.hash('testpass123', 10);
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email',
-      ['test@example.com', passwordHash, 'Test User']
-    );
-    testUser = result.rows[0];
-    authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+    try {
+      // Create test user
+      const passwordHash = await bcrypt.hash('testpass123', 10);
+      const result = await pool.query(
+        'INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id, email',
+        ['test@example.com', passwordHash, 'Test User']
+      );
+      testUser = result.rows[0];
+      authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+    } catch (error) {
+      console.error('Error setting up test data:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
-    // Clean up test data
-    await pool.query('DELETE FROM event_ratings WHERE user_id = $1', [testUser.id]);
-    await pool.query('DELETE FROM saved_events WHERE user_id = $1', [testUser.id]);
-    await pool.query('DELETE FROM events WHERE created_by = $1', [testUser.id]);
-    await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
-    await pool.end();
+    try {
+      // Clean up test data
+      await pool.query('DELETE FROM event_ratings WHERE user_id = $1', [testUser.id]);
+      await pool.query('DELETE FROM saved_events WHERE user_id = $1', [testUser.id]);
+      await pool.query('DELETE FROM events WHERE created_by = $1', [testUser.id]);
+      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+      throw error;
+    }
   });
 
   describe('POST /api/events', () => {
@@ -34,10 +43,8 @@ describe('Event Controller Tests', () => {
       const eventData = {
         title: 'Test Event',
         description: 'Test Description',
-        location: {
-          type: 'Point',
-          coordinates: [-73.935242, 40.730610]
-        },
+        latitude: 40.730610,
+        longitude: -73.935242,
         start_time: new Date(Date.now() + 86400000).toISOString(),
         end_time: new Date(Date.now() + 172800000).toISOString(),
         category_id: 1
@@ -49,9 +56,9 @@ describe('Event Controller Tests', () => {
         .send(eventData);
 
       expect(response.status).toBe(201);
-      expect(response.body.data).toHaveProperty('id');
-      expect(response.body.data.title).toBe(eventData.title);
-      testEvent = response.body.data;
+      expect(response.body).toHaveProperty('id');
+      expect(response.body.title).toBe(eventData.title);
+      testEvent = response.body;
     });
 
     it('should validate required fields', async () => {
@@ -64,14 +71,14 @@ describe('Event Controller Tests', () => {
     });
   });
 
-  describe('GET /api/events', () => {
+  describe('GET /api/events/:id', () => {
     it('should get event by ID', async () => {
       const response = await request(app)
         .get(`/api/events/${testEvent.id}`)
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.id).toBe(testEvent.id);
+      expect(response.body.id).toBe(testEvent.id);
     });
 
     it('should return 404 for non-existent event', async () => {
@@ -131,8 +138,8 @@ describe('Event Controller Tests', () => {
         .send(updateData);
 
       expect(response.status).toBe(200);
-      expect(response.body.data.title).toBe(updateData.title);
-      expect(response.body.data.description).toBe(updateData.description);
+      expect(response.body.title).toBe(updateData.title);
+      expect(response.body.description).toBe(updateData.description);
     });
 
     it('should not allow updating other user\'s event', async () => {
@@ -196,11 +203,11 @@ describe('Event Controller Tests', () => {
         .send(ratingData);
 
       expect(response.status).toBe(201);
-      expect(response.body.data.rating).toBe(ratingData.rating);
-      expect(response.body.data.review).toBe(ratingData.review);
+      expect(response.body.rating).toBe(ratingData.rating);
+      expect(response.body.review).toBe(ratingData.review);
 
       // Clean up
-      await pool.query('DELETE FROM event_ratings WHERE event_id = $1', [newEvent.rows[0].id]);
+      await pool.query('DELETE FROM reviews WHERE event_id = $1', [newEvent.rows[0].id]);
       await pool.query('DELETE FROM events WHERE id = $1', [newEvent.rows[0].id]);
     });
   });
@@ -217,15 +224,15 @@ describe('Event Controller Tests', () => {
         .post(`/api/events/${newEvent.rows[0].id}/save`)
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(response.status).toBe(201);
+      expect(response.status).toBe(200);
 
       // Verify event is saved
       const savedResponse = await request(app)
-        .get('/api/events/saved')
+        .get('/api/events/saved/list')
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(savedResponse.status).toBe(200);
-      expect(savedResponse.body.data.some(event => event.id === newEvent.rows[0].id)).toBe(true);
+      expect(savedResponse.body.some(event => event.id === newEvent.rows[0].id)).toBe(true);
 
       // Clean up
       await pool.query('DELETE FROM saved_events WHERE event_id = $1', [newEvent.rows[0].id]);

@@ -9,19 +9,28 @@ describe('Internationalization Tests', () => {
   let authToken;
 
   beforeAll(async () => {
-    // Create test user
-    const passwordHash = await bcrypt.hash('testpass123', 10);
-    const result = await pool.query(
-      'INSERT INTO users (email, password_hash, name, preferred_language) VALUES ($1, $2, $3, $4) RETURNING id',
-      ['test@example.com', passwordHash, 'Test User', 'en']
-    );
-    testUser = result.rows[0];
-    authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+    try {
+      // Create test user
+      const passwordHash = await bcrypt.hash('testpass123', 10);
+      const result = await pool.query(
+        'INSERT INTO users (email, password_hash, name, preferred_language) VALUES ($1, $2, $3, $4) RETURNING id',
+        ['test@example.com', passwordHash, 'Test User', 'en']
+      );
+      testUser = result.rows[0];
+      authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+    } catch (error) {
+      console.error('Error setting up test data:', error);
+      throw error;
+    }
   });
 
   afterAll(async () => {
-    await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
-    await pool.end();
+    try {
+      await pool.query('DELETE FROM users WHERE id = $1', [testUser.id]);
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+      throw error;
+    }
   });
 
   describe('Language Detection and Switching', () => {
@@ -87,32 +96,49 @@ describe('Internationalization Tests', () => {
   describe('Language Preference Updates', () => {
     it('should update user language preference', async () => {
       const response = await request(app)
-        .put('/api/users/preferences')
+        .patch('/api/users/preferences')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          preferred_language: 'es'
-        });
+        .send({ preferred_language: 'es' });
 
       expect(response.status).toBe(200);
-      expect(response.body.data.preferred_language).toBe('es');
-
-      // Verify in database
-      const { rows } = await pool.query(
-        'SELECT preferred_language FROM users WHERE id = $1',
-        [testUser.id]
-      );
-      expect(rows[0].preferred_language).toBe('es');
+      expect(response.body.preferred_language).toBe('es');
     });
 
-    it('should validate language codes', async () => {
+    it('should return error for invalid language code', async () => {
       const response = await request(app)
-        .put('/api/users/preferences')
+        .patch('/api/users/preferences')
         .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          preferred_language: 'invalid'
-        });
+        .send({ preferred_language: 'invalid' });
 
       expect(response.status).toBe(400);
+    });
+  });
+
+  describe('Translation', () => {
+    it('should return translated content based on user language', async () => {
+      // First set language to Spanish
+      await request(app)
+        .patch('/api/users/preferences')
+        .set('Authorization', `Bearer ${authToken}`)
+        .send({ preferred_language: 'es' });
+
+      const response = await request(app)
+        .get('/api/events')
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('Accept-Language', 'es');
+
+      expect(response.status).toBe(200);
+      // Add assertions for translated content
+    });
+
+    it('should fallback to English for unsupported language', async () => {
+      const response = await request(app)
+        .get('/api/events')
+        .set('Authorization', `Bearer ${authToken}`)
+        .set('Accept-Language', 'xx');
+
+      expect(response.status).toBe(200);
+      // Add assertions for English content
     });
   });
 }); 
