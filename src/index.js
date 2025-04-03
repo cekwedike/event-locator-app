@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const swaggerUi = require('swagger-ui-express');
 const i18next = require('i18next');
 const i18nextMiddleware = require('i18next-http-middleware');
 const i18nextBackend = require('i18next-node-fs-backend');
@@ -12,6 +13,7 @@ const { setupRabbitMQ } = require('./config/rabbitmq');
 const routes = require('./routes');
 const errorHandler = require('./middleware/errorHandler');
 const logger = require('./utils/logger');
+const swaggerSpecs = require('./config/swagger');
 
 const app = express();
 
@@ -20,6 +22,9 @@ app.use(helmet());
 app.use(cors());
 app.use(express.json());
 app.use(morgan('combined', { stream: { write: message => logger.info(message.trim()) } }));
+
+// Swagger documentation
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
 
 // i18n setup
 i18next
@@ -61,6 +66,7 @@ const startServer = async () => {
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
       logger.info(`Server is running on port ${PORT}`);
+      logger.info(`API documentation available at http://localhost:${PORT}/api-docs`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
