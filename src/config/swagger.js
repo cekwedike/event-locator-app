@@ -6,56 +6,107 @@ const options = {
     info: {
       title: 'Event Locator API',
       version: '1.0.0',
-      description: 'API documentation for the Event Locator application. This API provides endpoints for managing events, users, and location-based services.',
+      description: 'API for the Event Locator application',
       contact: {
         name: 'API Support',
         email: 'support@eventlocator.com'
-      },
-      license: {
-        name: 'MIT',
-        url: 'https://opensource.org/licenses/MIT'
       }
     },
     servers: [
       {
-        url: process.env.API_BASE_URL || 'http://localhost:3000/api',
-        description: process.env.NODE_ENV === 'production' ? 'Production server' : 'Development server',
-      },
+        url: 'http://localhost:3000',
+        description: 'Development server'
+      }
     ],
     components: {
+      schemas: {
+        Event: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer'
+            },
+            title: {
+              type: 'string'
+            },
+            description: {
+              type: 'string'
+            },
+            location: {
+              type: 'object',
+              properties: {
+                type: {
+                  type: 'string',
+                  example: 'Point'
+                },
+                coordinates: {
+                  type: 'array',
+                  items: {
+                    type: 'number'
+                  }
+                }
+              }
+            },
+            start_time: {
+              type: 'string',
+              format: 'date-time'
+            },
+            end_time: {
+              type: 'string',
+              format: 'date-time'
+            },
+            category_id: {
+              type: 'integer'
+            },
+            created_by: {
+              type: 'integer'
+            }
+          }
+        },
+        Review: {
+          type: 'object',
+          properties: {
+            id: {
+              type: 'integer'
+            },
+            rating: {
+              type: 'integer',
+              minimum: 1,
+              maximum: 5
+            },
+            comment: {
+              type: 'string'
+            },
+            user_id: {
+              type: 'integer'
+            },
+            event_id: {
+              type: 'integer'
+            }
+          }
+        },
+        Error: {
+          type: 'object',
+          properties: {
+            message: {
+              type: 'string'
+            },
+            error: {
+              type: 'string'
+            }
+          }
+        }
+      },
       securitySchemes: {
         bearerAuth: {
           type: 'http',
           scheme: 'bearer',
-          bearerFormat: 'JWT',
-          description: 'Enter your JWT token in the format: Bearer <token>'
-        },
-      },
-      schemas: {
-        Error: {
-          type: 'object',
-          properties: {
-            status: {
-              type: 'string',
-              example: 'error'
-            },
-            statusCode: {
-              type: 'integer',
-              example: 400
-            },
-            message: {
-              type: 'string',
-              example: 'Invalid input data'
-            }
-          }
+          bearerFormat: 'JWT'
         }
       }
-    },
-    security: [{
-      bearerAuth: [],
-    }],
+    }
   },
-  apis: ['./src/routes/*.js'], // Path to the API routes
+  apis: ['./src/routes/*.js']
 };
 
 const specs = swaggerJsdoc(options);

@@ -4,7 +4,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const swaggerUi = require('swagger-ui-express');
-const swaggerDocument = require('./swagger.json');
+const swaggerSpecs = require('./config/swagger');
 const { Pool } = require('pg');
 const logger = require('./utils/logger');
 const redis = require('./config/redis');
@@ -26,7 +26,17 @@ app.use(express.json());
 app.use(morgan('dev'));
 
 // API Documentation
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpecs));
+
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    message: 'Welcome to Event Locator API',
+    documentation: '/api-docs',
+    health: '/api/health',
+    version: '1.0.0'
+  });
+});
 
 // Routes
 app.use('/api/users', userRoutes);
