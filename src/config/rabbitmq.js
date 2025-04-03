@@ -1,15 +1,21 @@
 const amqp = require('amqplib');
 const logger = require('../utils/logger');
 
-let channel;
-let connection;
+let channel = null;
+let connection = null;
 
 const setupRabbitMQ = async () => {
+  if (process.env.NODE_ENV === 'development' && !process.env.FORCE_RABBITMQ) {
+    logger.info('Skipping RabbitMQ setup in development mode');
+    return;
+  }
+
   try {
-    connection = await amqp.connect(process.env.RABBITMQ_URL);
+    const url = `amqp://${process.env.RABBITMQ_USER}:${process.env.RABBITMQ_PASSWORD}@${process.env.RABBITMQ_HOST}:${process.env.RABBITMQ_PORT}`;
+    connection = await amqp.connect(url);
     channel = await connection.createChannel();
 
-    // Declare queues
+    // Create queues
     await channel.assertQueue('event_notifications', { durable: true });
     await channel.assertQueue('event_updates', { durable: true });
 
@@ -31,12 +37,14 @@ const setupRabbitMQ = async () => {
 
 // Message publishing helper
 const publishMessage = async (queue, message) => {
+  if (!channel) {
+    logger.warn('RabbitMQ not connected - message not sent');
+    return;
+  }
+
   try {
-    await channel.sendToQueue(
-      queue,
-      Buffer.from(JSON.stringify(message)),
-      { persistent: true }
-    );
+    await channel.sendToQueue(queue, Buffer.from(JSON.stringify(message)));
+    logger.info(`Message published to ${queue}`);
   } catch (error) {
     logger.error('Error publishing message:', error);
     throw error;
@@ -45,19 +53,20 @@ const publishMessage = async (queue, message) => {
 
 // Message consuming helper
 const consumeMessages = async (queue, callback) => {
+  if (!channel) {
+    logger.warn('RabbitMQ not connected - message consumption not started');
+    return;
+  }
+
   try {
-    await channel.consume(queue, async (msg) => {
+    await channel.consume(queue, (msg) => {
       if (msg) {
-        try {
-          const message = JSON.parse(msg.content.toString());
-          await callback(message);
-          channel.ack(msg);
-        } catch (error) {
-          logger.error('Error processing message:', error);
-          channel.nack(msg);
-        }
+        const content = JSON.parse(msg.content.toString());
+        callback(content);
+        channel.ack(msg);
       }
     });
+    logger.info(`Consuming messages from ${queue}`);
   } catch (error) {
     logger.error('Error consuming messages:', error);
     throw error;
@@ -66,11 +75,11 @@ const consumeMessages = async (queue, callback) => {
 
 // Close connection
 const closeConnection = async () => {
-  try {
-    if (channel) await channel.close();
-    if (connection) await connection.close();
-  } catch (error) {
-    logger.error('Error closing RabbitMQ connection:', error);
+  if (channel) {
+    await channel.close();
+  }
+  if (connection) {
+    await connection.close();
   }
 };
 

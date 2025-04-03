@@ -65,8 +65,19 @@ const startServer = async () => {
     
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => {
+      const serverUrl = `http://localhost:${PORT}`;
+      const apiDocsUrl = `${serverUrl}/api-docs`;
+      const healthCheckUrl = `${serverUrl}/api/health`;
+      
+      console.log('\n🚀 Server is running!');
+      console.log('----------------------------------------');
+      console.log(`🌐 Server URL: ${serverUrl}`);
+      console.log(`📚 API Documentation: ${apiDocsUrl}`);
+      console.log(`❤️  Health Check: ${healthCheckUrl}`);
+      console.log('----------------------------------------\n');
+      
       logger.info(`Server is running on port ${PORT}`);
-      logger.info(`API documentation available at http://localhost:${PORT}/api-docs`);
+      logger.info(`API documentation available at ${apiDocsUrl}`);
     });
   } catch (error) {
     logger.error('Failed to start server:', error);
