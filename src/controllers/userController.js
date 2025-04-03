@@ -211,13 +211,22 @@ const getProfile = async (req, res) => {
       });
     }
 
-    // Get user profile with preferences
+    // Get user profile with preferences and location
     const { rows } = await pool.query(
-      `SELECT u.id, u.email, u.name, u.preferred_language,
-              up.notification_preferences, up.theme
-       FROM users u
-       LEFT JOIN user_preferences up ON u.id = up.user_id
-       WHERE u.id = $1`,
+      `SELECT 
+        u.id, 
+        u.email, 
+        u.name, 
+        u.preferred_language,
+        ST_X(u.location::geometry) as longitude,
+        ST_Y(u.location::geometry) as latitude,
+        COALESCE(up.notification_preferences, '{"email": true, "push": true}'::jsonb) as notification_preferences,
+        COALESCE(up.notification_radius, 10) as notification_radius,
+        COALESCE(up.notification_enabled, true) as notification_enabled,
+        COALESCE(up.theme, 'light') as theme
+      FROM users u
+      LEFT JOIN user_preferences up ON u.id = up.user_id
+      WHERE u.id = $1`,
       [userId]
     );
 
@@ -229,6 +238,16 @@ const getProfile = async (req, res) => {
     }
 
     const profile = rows[0];
+
+    // Create user preferences if they don't exist
+    if (!profile.notification_preferences) {
+      await pool.query(
+        `INSERT INTO user_preferences (user_id)
+         VALUES ($1)
+         ON CONFLICT (user_id) DO NOTHING`,
+        [userId]
+      );
+    }
 
     // Try to cache the profile
     try {
