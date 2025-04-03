@@ -14,13 +14,15 @@ let testReview;
 // Setup function to create test data
 async function setupTestData() {
   try {
-    // Create test user
+    // Create test user with a unique email using timestamp
+    const timestamp = Date.now();
+    const testEmail = `test${timestamp}@example.com`;
     const passwordHash = await bcrypt.hash('testpass123', 10);
     const userResult = await pool.query(
       `INSERT INTO users (email, password_hash, name, location)
        VALUES ($1, $2, $3, ST_SetSRID(ST_MakePoint($4, $5), 4326))
        RETURNING id, email`,
-      ['test@example.com', passwordHash, 'Test User', -73.935242, 40.730610]
+      [testEmail, passwordHash, 'Test User', -73.935242, 40.730610]
     );
     testUser = userResult.rows[0];
     
@@ -129,7 +131,7 @@ async function testAllEndpoints() {
     const loginResponse = await request(app)
       .post('/users/login')
       .send({
-        email: 'test@example.com',
+        email: testUser.email,
         password: 'testpass123'
       });
     console.log(`Status: ${loginResponse.status}`);
@@ -198,7 +200,7 @@ async function testAllEndpoints() {
     const forgotPasswordResponse = await request(app)
       .post('/auth/forgot-password')
       .send({
-        email: 'test@example.com'
+        email: testUser.email
       });
     console.log(`Status: ${forgotPasswordResponse.status}`);
     
