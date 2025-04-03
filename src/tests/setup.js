@@ -24,6 +24,7 @@ module.exports = async () => {
       DROP TABLE IF EXISTS saved_events CASCADE;
       DROP TABLE IF EXISTS reviews CASCADE;
       DROP TABLE IF EXISTS events CASCADE;
+      DROP TABLE IF EXISTS user_preferences CASCADE;
       DROP TABLE IF EXISTS users CASCADE;
     `);
 
@@ -38,6 +39,16 @@ module.exports = async () => {
         preferred_language VARCHAR(10) DEFAULT 'en',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      );
+
+      CREATE TABLE IF NOT EXISTS user_preferences (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        notification_preferences JSONB DEFAULT '{"email": true, "push": true}'::jsonb,
+        theme VARCHAR(20) DEFAULT 'light',
+        created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id)
       );
 
       CREATE TABLE IF NOT EXISTS events (

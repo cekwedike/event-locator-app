@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "test": "jest --detectOpenHandles",
+    "test": "jest --detectOpenHandles --verbose",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
     "migrate": "node src/db/migrate.js"

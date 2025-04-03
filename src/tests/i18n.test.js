@@ -3,25 +3,29 @@ const app = require('../index');
 const { pool } = require('../config/database');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { setupTestDatabase, cleanupTestDatabase } = require('./setup');
 
 describe('Internationalization Tests', () => {
   let testUser;
-  let authToken;
+  let testToken;
 
   beforeAll(async () => {
     try {
-      // Setup test database
-      await setupTestDatabase();
-
       // Create test user
       const passwordHash = await bcrypt.hash('testpass123', 10);
-      const result = await pool.query(
-        'INSERT INTO users (email, password_hash, name, preferred_language) VALUES ($1, $2, $3, $4) RETURNING id',
+      const { rows } = await pool.query(
+        `INSERT INTO users (email, password_hash, name, preferred_language)
+         VALUES ($1, $2, $3, $4)
+         RETURNING id, email, name, preferred_language`,
         ['test@example.com', passwordHash, 'Test User', 'en']
       );
-      testUser = result.rows[0];
-      authToken = jwt.sign({ id: testUser.id }, process.env.JWT_SECRET);
+      testUser = rows[0];
+
+      // Generate token for the test user
+      testToken = jwt.sign(
+        { id: testUser.id },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+      );
     } catch (error) {
       console.error('Error setting up test data:', error);
       throw error;
@@ -30,7 +34,8 @@ describe('Internationalization Tests', () => {
 
   afterAll(async () => {
     try {
-      await cleanupTestDatabase();
+      // Clean up test data
+      await pool.query('DELETE FROM users WHERE email = $1', ['test@example.com']);
     } catch (error) {
       console.error('Error cleaning up test data:', error);
       throw error;
@@ -56,7 +61,7 @@ describe('Internationalization Tests', () => {
 
       const response = await request(app)
         .get('/api/health')
-        .set('Authorization', `Bearer ${authToken}`);
+        .set('Authorization', `Bearer ${testToken}`);
 
       expect(response.status).toBe(200);
       expect(response.body.message).toBe('API fonctionne correctement');
@@ -101,7 +106,7 @@ describe('Internationalization Tests', () => {
     it('should update user language preference', async () => {
       const response = await request(app)
         .patch('/api/users/preferences')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${testToken}`)
         .send({ preferred_language: 'es' });
 
       expect(response.status).toBe(200);
@@ -111,7 +116,7 @@ describe('Internationalization Tests', () => {
     it('should return error for invalid language code', async () => {
       const response = await request(app)
         .patch('/api/users/preferences')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${testToken}`)
         .send({ preferred_language: 'invalid' });
 
       expect(response.status).toBe(400);
@@ -123,12 +128,12 @@ describe('Internationalization Tests', () => {
       // First set language to Spanish
       await request(app)
         .patch('/api/users/preferences')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${testToken}`)
         .send({ preferred_language: 'es' });
 
       const response = await request(app)
         .get('/api/events')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${testToken}`)
         .set('Accept-Language', 'es');
 
       expect(response.status).toBe(200);
@@ -138,7 +143,7 @@ describe('Internationalization Tests', () => {
     it('should fallback to English for unsupported language', async () => {
       const response = await request(app)
         .get('/api/events')
-        .set('Authorization', `Bearer ${authToken}`)
+        .set('Authorization', `Bearer ${testToken}`)
         .set('Accept-Language', 'xx');
 
       expect(response.status).toBe(200);
