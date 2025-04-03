@@ -1,0 +1,52 @@
+{
+  "errors": {
+    "validation": {
+      "required": "{{field}} est requis",
+      "email": "Veuillez fournir une adresse e-mail valide",
+      "min": "{{field}} doit contenir au moins {{limit}} caractères",
+      "max": "{{field}} ne doit pas dépasser {{limit}} caractères",
+      "invalid": "{{field}} invalide"
+    },
+    "auth": {
+      "unauthorized": "Veuillez vous authentifier",
+      "forbidden": "Accès interdit",
+      "invalid_credentials": "Identifiants invalides",
+      "user_exists": "L'utilisateur existe déjà"
+    },
+    "event": {
+      "not_found": "Événement non trouvé",
+      "not_authorized": "Non autorisé à effectuer cette action",
+      "invalid_date": "Plage de dates invalide",
+      "invalid_location": "Coordonnées de localisation invalides"
+    }
+  },
+  "success": {
+    "user": {
+      "registered": "Utilisateur enregistré avec succès",
+      "logged_in": "Connexion réussie",
+      "preferences_updated": "Préférences mises à jour avec succès",
+      "location_updated": "Localisation mise à jour avec succès"
+    },
+    "event": {
+      "created": "Événement créé avec succès",
+      "updated": "Événement mis à jour avec succès",
+      "deleted": "Événement supprimé avec succès",
+      "rated": "Événement noté avec succès",
+      "saved": "Événement enregistré avec succès"
+    }
+  },
+  "notifications": {
+    "upcoming_event": {
+      "subject": "Événement à venir : {{title}}",
+      "body": "Bonjour {{name}},\n\nUn événement qui pourrait vous intéresser approche :\n\nTitre : {{title}}\nDate : {{date}}\n\nNe le manquez pas !"
+    },
+    "event_updated": {
+      "subject": "Événement Mis à Jour : {{title}}",
+      "body": "Bonjour {{name}},\n\nUn événement que vous avez enregistré a été mis à jour :\n\nTitre : {{title}}\nDate : {{date}}\n\nDécouvrez-le !"
+    },
+    "event_deleted": {
+      "subject": "Événement Annulé : {{title}}",
+      "body": "Bonjour {{name}},\n\nUn événement que vous avez enregistré a été annulé :\n\nTitre : {{title}}\nDate : {{date}}\n\nNous nous excusons pour tout inconvénient."
+    }
+  }
+} 

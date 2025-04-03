@@ -1,0 +1,52 @@
+{
+  "errors": {
+    "validation": {
+      "required": "{{field}} es requerido",
+      "email": "Por favor proporcione una dirección de correo electrónico válida",
+      "min": "{{field}} debe tener al menos {{limit}} caracteres",
+      "max": "{{field}} no debe exceder {{limit}} caracteres",
+      "invalid": "{{field}} inválido"
+    },
+    "auth": {
+      "unauthorized": "Por favor autentíquese",
+      "forbidden": "Acceso prohibido",
+      "invalid_credentials": "Credenciales inválidas",
+      "user_exists": "El usuario ya existe"
+    },
+    "event": {
+      "not_found": "Evento no encontrado",
+      "not_authorized": "No autorizado para realizar esta acción",
+      "invalid_date": "Rango de fechas inválido",
+      "invalid_location": "Coordenadas de ubicación inválidas"
+    }
+  },
+  "success": {
+    "user": {
+      "registered": "Usuario registrado exitosamente",
+      "logged_in": "Sesión iniciada exitosamente",
+      "preferences_updated": "Preferencias actualizadas exitosamente",
+      "location_updated": "Ubicación actualizada exitosamente"
+    },
+    "event": {
+      "created": "Evento creado exitosamente",
+      "updated": "Evento actualizado exitosamente",
+      "deleted": "Evento eliminado exitosamente",
+      "rated": "Evento calificado exitosamente",
+      "saved": "Evento guardado exitosamente"
+    }
+  },
+  "notifications": {
+    "upcoming_event": {
+      "subject": "Próximo Evento: {{title}}",
+      "body": "Hola {{name}},\n\nUn evento que podría interesarte está por comenzar:\n\nTítulo: {{title}}\nFecha: {{date}}\n\n¡No te lo pierdas!"
+    },
+    "event_updated": {
+      "subject": "Evento Actualizado: {{title}}",
+      "body": "Hola {{name}},\n\nUn evento que guardaste ha sido actualizado:\n\nTítulo: {{title}}\nFecha: {{date}}\n\n¡Échale un vistazo!"
+    },
+    "event_deleted": {
+      "subject": "Evento Cancelado: {{title}}",
+      "body": "Hola {{name}},\n\nUn evento que guardaste ha sido cancelado:\n\nTítulo: {{title}}\nFecha: {{date}}\n\nNos disculpamos por cualquier inconveniente."
+    }
+  }
+} 
