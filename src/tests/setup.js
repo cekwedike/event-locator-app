@@ -1,4 +1,5 @@
 require('dotenv').config({ path: '.env.test' });
+const { createTestDatabase } = require('../db/createTestDb');
 
 // Set test environment variables
 process.env.NODE_ENV = 'test';
@@ -29,6 +30,9 @@ const { pool } = require('../config/database');
 
 async function setupTestDatabase() {
   try {
+    // Create test database if it doesn't exist
+    await createTestDatabase();
+
     // Enable PostGIS extension
     await pool.query('CREATE EXTENSION IF NOT EXISTS postgis');
     
