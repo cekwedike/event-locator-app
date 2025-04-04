@@ -7,6 +7,10 @@ A multi-user event locator application with geospatial features.
 **Chidiebere Ekwedike**  
 GitHub: [cekwedike](https://github.com/cekwedike)
 
+## Demo Video
+
+Watch the [demo video](https://drive.google.com/file/d/183okNDYOlH6culWJxWGgy10iMiljhnEG/view?usp=sharing) to see the application in action.
+
 ## Features
 
 - User authentication and authorization
